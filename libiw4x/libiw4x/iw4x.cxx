@@ -7,11 +7,17 @@ using namespace std;
 
 namespace iw4x
 {
-  void say_hello (ostream& o, const string& n)
+  extern "C"
   {
-    if (n.empty ())
-      throw invalid_argument ("empty name");
+    BOOL WINAPI
+    DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+    {
+      if (fdwReason != DLL_PROCESS_ATTACH)
+        return TRUE;
 
-    o << "Hello, " << n << '!' << endl;
+      // Successful DLL_PROCESS_ATTACH.
+      //
+      return TRUE;
+    }
   }
 }
