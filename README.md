@@ -1,11 +1,9 @@
-# iw4x - <SUMMARY>
+IW4x (Microsoft Store x64 Research)
 
-`iw4x` is a <SUMMARY-OF-FUNCTIONALITY>.
+![Alt text](.github/screenshot.png?raw=true)
 
 This file contains setup instructions and other details that are more
-appropriate for development rather than consumption. If you want to use
-`iw4x` in your `build2`-based project, then instead see the accompanying
-package [`README.md`](<PACKAGE>/README.md) file.
+appropriate for development rather than consumption.
 
 The development setup for `iw4x` uses the standard `bdep`-based workflow.
 For example:
