@@ -14,7 +14,7 @@ For example:
 git clone .../iw4x.git
 cd iw4x
 
-bdep init -C @gcc cc config.cxx=g++
+bdep init -C @mingw64 config.cxx=x86_64-w64-mingw32-g++ cc config.cc.compiledb=./
 bdep update
 bdep test
 ```
