@@ -26,9 +26,32 @@ namespace iw4x
   private:
     int value_ {};
   };
+
+  namespace
+  {
+    void
+    test_basic_component ()
+    {
+      //
+      //
+      auto& b1 (basic_component::get ());
+      assert (b1.get_value () == 42);
+
+      //
+      //
+      auto& b2 (basic_component::get ());
+      b2.set_value (100);
+      assert (b1.get_value () == 100);
+
+      //
+      //
+      assert (&b1 == &b2);
+    }
+  }
 }
 
 int main ()
 {
   using namespace iw4x;
+
 }

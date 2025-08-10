@@ -1,5 +1,8 @@
 #pragma once
 
+#include <atomic>
+#include <memory>
+#include <mutex>
 #include <type_traits>
 
 #include <libiw4x/export.hxx>
@@ -12,6 +15,24 @@ namespace iw4x
     struct component_traits
     {
       using type = T;
+    };
+
+    template <typename T>
+    class component_instance
+    {
+    public:
+      using instance_type = T;
+      using pointer_type = std::shared_ptr<T>;
+
+      // Instance access with lazy initialization.
+      //
+      pointer_type
+      get_or_create ();
+
+    private:
+      mutable std::atomic<T *> instance_ {nullptr};
+      mutable pointer_type shared_instance_;
+      mutable std::once_flag  init_flag_;
     };
   }
 
@@ -29,6 +50,10 @@ namespace iw4x
 
   protected:
     component () = default;
+
+  private:
+    static details::component_instance<T> &
+    instance_holder () noexcept;
   };
 }
 
