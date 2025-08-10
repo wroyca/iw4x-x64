@@ -27,6 +27,28 @@ namespace iw4x
     int value_ {};
   };
 
+  class dependency_component final : public component<dependency_component>
+  {
+  public:
+    dependency_component ()
+      : initialized_ (true) {}
+
+    bool
+    is_initialized () const
+    {
+      return initialized_;
+    }
+
+    static std::vector<std::type_index>
+    component_dependencies ()
+    {
+      return {std::type_index (typeid (basic_component))};
+    }
+
+  private:
+    bool initialized_ {};
+  };
+
   namespace
   {
     void
@@ -55,6 +77,11 @@ namespace iw4x
 
       r.register_singleton<basic_component> ();
       assert (r.is_registered<basic_component> ());
+
+      r.register_singleton<dependency_component> ();
+      assert (r.is_registered<dependency_component> ());
+
+      assert (r.validate_dependencies ());
     }
   }
 }

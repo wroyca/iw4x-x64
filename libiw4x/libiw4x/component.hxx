@@ -64,6 +64,9 @@ namespace iw4x
                           init_function init,
                           std::vector<component_id> dependencies = {});
 
+      bool
+      validate_dependencies () const;
+
     private:
       struct component_info
       {
@@ -74,6 +77,11 @@ namespace iw4x
 
       std::unordered_map<component_id, component_info> components_;
       mutable std::mutex mutex_;
+
+      void
+      check_cycles (component_id id,
+                    std::unordered_set<component_id> &visiting,
+                    std::unordered_set<component_id> &visited) const;
     };
   }
 
@@ -117,6 +125,9 @@ namespace iw4x
 
     template <typename T> bool
     is_registered () const noexcept;
+
+    bool
+    validate_dependencies () const;
 
   private:
     mutable std::mutex registry_mutex_;
