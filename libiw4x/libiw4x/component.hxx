@@ -52,8 +52,17 @@ namespace iw4x
     component () = default;
 
   private:
+    friend class component_registry;
+
     static details::component_instance<T> &
     instance_holder () noexcept;
+  };
+
+  class LIBIW4X_SYMEXPORT component_registry
+  {
+  public:
+    static component_registry &
+    instance () noexcept;
   };
 }
 

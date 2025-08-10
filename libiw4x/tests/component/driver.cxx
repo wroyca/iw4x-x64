@@ -47,6 +47,12 @@ namespace iw4x
       //
       assert (&b1 == &b2);
     }
+
+    void
+    test_component_registry ()
+    {
+      auto &r (component_registry::instance ());
+    }
   }
 }
 
