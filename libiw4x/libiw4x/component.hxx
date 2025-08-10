@@ -167,6 +167,36 @@ namespace iw4x
     template <typename T>
     void register_component_impl (std::vector<std::type_index> dependencies);
   };
+
+  template <typename T>
+  class component_registrar
+  {
+  public:
+    component_registrar ()
+    {
+      component_registry::instance ().register_singleton<T> ();
+    }
+
+    template <typename... Dependencies>
+    component_registrar (Dependencies...)
+    {
+      component_registry::instance ().register_singleton_with_deps<T, Dependencies...> ();
+    }
+  };
+
+#define IW4X_REGISTER_COMPONENT(T)                \
+  static const ::iw4x::component_registrar<T>     \
+      T##_registrar_instance_                     \
+  {                                               \
+  }
+
+#define IW4X_REGISTER_COMPONENT_WITH_DEPS(T, ...) \
+  static const ::iw4x::component_registrar<T>     \
+      T##_registrar_instance_                     \
+  {                                               \
+    std::type_index (typeid (T)),                 \
+    std::type_index (typeid (__VA_ARGS__))...     \
+  }
 }
 
 #include <libiw4x/component.ixx>
