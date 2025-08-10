@@ -4,24 +4,49 @@ namespace iw4x
 {
   namespace details
   {
-    template <typename T>
-    inline component_instance<T>::pointer_type
-    component_instance<T>::get_or_create ()
+    template <typename T> inline component_instance<T>::pointer_type component_instance<T>::
+    get_or_create ()
     {
-      T *instance = instance_.load (std::memory_order_acquire);
+      auto& r (instance_);
+      auto& s (shared_instance_);
 
-      if (instance == nullptr)
+      // The steady-state case is the common one: the component has already
+      // been initialized, and all we need is to return a reference to it. We
+      // therefore attempt a lock-free read of the published raw pointer first.
+      //
+      T *instance (r.load (std::memory_order_acquire));
+
+      // If it is non-null, then we know the object is fully constructed and
+      // visible due to the acquire semantics on the load.
+      //
+      if (instance != nullptr)
+        return s;
+
+      // If we get here, then we are on a slow path: the instance does not yet
+      // exist, or at least has not been published to us.
+      //
+      // Note that multiple threads may arrive here simultaneously, but only
+      // one of them should actually perform the initialization.
+      //
+      std::call_once (init_flag_,
+                      [this, &r, &s] ()
       {
-        std::call_once (init_flag_, [this] ()
-        {
-          shared_instance_ = std::make_shared<T> ();
-          instance_.store (shared_instance_.get (), std::memory_order_release);
-        });
+        // We deliberately construct the shared instance before publishing its
+        // raw pointer. This guarantees that any thread which subsequently
+        // reads the pointer will observe a fully-formed object.
+        //
+        s = std::make_shared<T> ();
 
-        instance = instance_.load (std::memory_order_acquire);
-      }
+        // The release semantics here are not optional. They form the "publish"
+        // half of the acquire/release handshake that makes the initial
+        // fast-path load reliable. Without the release, another thread could
+        // see a non-null pointer but still observe a partially-initialized
+        // object.
+        //
+        r.store (s.get (), std::memory_order_release);
+      });
 
-      return shared_instance_;
+      return s;
     }
   }
 
