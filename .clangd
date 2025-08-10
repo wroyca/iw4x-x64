@@ -7,4 +7,13 @@ Diagnostics:
   UnusedIncludes: None
 Completion:
   AllScopes: true
+
+# https://github.com/clangd/clangd/issues/45
+#
+---
+If:
+  PathMatch: .*\component.ixx$
+CompileFlags:
+  Add:
+    - "-include=libiw4x/component.hxx"
 ...
