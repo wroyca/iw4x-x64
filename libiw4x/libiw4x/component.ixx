@@ -72,45 +72,78 @@ namespace iw4x
   template <typename T> inline void component_registry::
   register_singleton ()
   {
-    std::vector<std::type_index> deps;
+    std::vector<std::type_index> dependencies;
 
+    // Note that for components without dependencies, the vector remains empty,
+    // which is semantically correct: an empty dependency list means "no
+    // dependencies", not "unknown dependencies".
+    //
     if constexpr (details::has_dependencies<T>::value)
-      deps = T::component_dependencies ();
+      dependencies = T::component_dependencies ();
 
-    register_component_impl<T> (std::move (deps));
+    register_component_impl<T> (std::move (dependencies));
   }
 
   template <typename T, typename... Dependencies> inline void component_registry::
-  register_singleton_with_deps ()
+  register_singleton_with_dependencies ()
   {
-    std::vector<std::type_index> d = {std::type_index (typeid (Dependencies))...};
+    std::vector<std::type_index> d ({
+      std::type_index (typeid (Dependencies))...
+    });
+
     register_component_impl<T> (std::move (d));
   }
 
   template <typename T> inline bool component_registry::
   is_registered () const noexcept
   {
-    std::lock_guard<std::mutex> lock (registry_mutex_);
+    auto& m (registry_mutex_);
+    auto& c (registered_components_);
 
-    return registered_components_.contains (std::type_index (typeid (T)));
+    // registration might be happening concurrently with queries.
+    //
+    std::lock_guard<std::mutex> lock (m);
+
+    return c.contains (std::type_index (typeid (T)));
   }
 
   template <typename T> inline void component_registry::
   register_component_impl (std::vector<std::type_index> d)
   {
-    std::lock_guard<std::mutex> lock (registry_mutex_);
+    auto& m (registry_mutex_);
+    auto& c (registered_components_);
+    auto& r (resolver_);
 
-    auto component_id (std::type_index (typeid (T)));
+    // Even though the bulk of component registration tends to happen during
+    // static initialization, runtime registration from multiple threads is
+    // possible and must be handled. We serialize here to protect the
+    // registry from concurrent mutations, but deliberately keep the
+    // critical section narrow to avoid holding the mutex across potentially
+    // long-running work.
+    //
+    std::lock_guard<std::mutex> lock (m);
 
-    if (registered_components_.contains (component_id))
+    // We do not want to error out if the same component type is registered more
+    // than once. Such case is common with layered initialization and can occur
+    // harmlessly. The only real concern is avoiding multiple resolver
+    // registrations for the same type, so we check our own set first and we
+    // silently skip it if its already present.
+    //
+    std::type_index component_id (std::type_index (typeid (T)));
+    if (c.contains (component_id))
       return;
 
-    auto init_func = [] ()
-    {
-      component<T>::get ();
-    };
+    // Registering with the dependency resolver allows it to compute an
+    // initialization order that satisfies all dependencies without us needing
+    // to preemptively construct the component. We deliberately defer the actual
+    // instantiation by passing a lambda that captures the type but does nothing
+    // until the resolver decides the time is right.
+    //
+    r.register_component (
+      component_id,
+      [] () { component<T>::get (); },
+      std::move (d));
 
-    resolver_.register_component (component_id, init_func, std::move (d));
-    registered_components_.insert (component_id);
+    c.insert (component_id);
   }
 }
