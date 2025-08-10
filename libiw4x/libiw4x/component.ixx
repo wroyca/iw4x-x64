@@ -31,6 +31,12 @@ namespace iw4x
     return *instance_holder ().get_or_create ();
   }
 
+  template <typename T> inline bool component<T>::
+  exists () noexcept
+  {
+    return instance_holder ().exists ();
+  }
+
   template <typename T> inline details::component_instance<T> &component<T>::
   instance_holder () noexcept
   {
@@ -47,6 +53,13 @@ namespace iw4x
       deps = T::component_dependencies ();
 
     register_component_impl<T> (std::move (deps));
+  }
+
+  template <typename T, typename... Dependencies> inline void component_registry::
+  register_singleton_with_deps ()
+  {
+    std::vector<std::type_index> d = {std::type_index (typeid (Dependencies))...};
+    register_component_impl<T> (std::move (d));
   }
 
   template <typename T> inline bool component_registry::

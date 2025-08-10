@@ -47,6 +47,12 @@ namespace iw4x
       pointer_type
       get_or_create ();
 
+      bool
+      exists () const noexcept
+      {
+        return instance_.load (std::memory_order_acquire) != nullptr;
+      }
+
     private:
       mutable std::atomic<T *> instance_ {nullptr};
       mutable pointer_type shared_instance_;
@@ -63,8 +69,10 @@ namespace iw4x
       register_component (component_id id,
                           init_function init,
                           std::vector<component_id> dependencies = {});
+      void
+      initialize_all ();
 
-      bool
+      void
       validate_dependencies () const;
 
     private:
@@ -77,6 +85,9 @@ namespace iw4x
 
       std::unordered_map<component_id, component_info> components_;
       mutable std::mutex mutex_;
+
+      void
+      initialize_component (component_id id);
 
       void
       check_cycles (component_id id,
@@ -92,10 +103,21 @@ namespace iw4x
     using component_type = T;
     using traits_type = details::component_traits<T>;
 
+    virtual ~component () = default;
+
     // Get component instance (singleton access).
     //
     static T&
     get ();
+
+    static bool
+    exists () noexcept;
+
+    static std::type_index
+    type_id () noexcept
+    {
+      return std::type_index (typeid (T));
+    }
 
     // Component dependencies (override in derived class if needed).
     //
@@ -123,10 +145,18 @@ namespace iw4x
     template <typename T> void
     register_singleton ();
 
+    template <typename T, typename... Dependencies> void
+    register_singleton_with_deps ();
+
     template <typename T> bool
     is_registered () const noexcept;
 
-    bool
+    // Initialize all registered components in dependency order.
+    //
+    void
+    initialize_all ();
+
+    void
     validate_dependencies () const;
 
   private:
