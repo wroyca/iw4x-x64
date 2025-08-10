@@ -52,6 +52,9 @@ namespace iw4x
     test_component_registry ()
     {
       auto &r (component_registry::instance ());
+
+      r.register_singleton<basic_component> ();
+      assert (r.is_registered<basic_component> ());
     }
   }
 }
@@ -60,4 +63,6 @@ int main ()
 {
   using namespace iw4x;
 
+  test_basic_component ();
+  test_component_registry ();
 }

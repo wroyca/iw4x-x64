@@ -37,4 +37,42 @@ namespace iw4x
     static details::component_instance<T> instance;
     return instance;
   }
+
+  template <typename T> inline void component_registry::
+  register_singleton ()
+  {
+    std::vector<std::type_index> deps;
+
+    if constexpr (details::has_dependencies<T>::value)
+      deps = T::component_dependencies ();
+
+    register_component_impl<T> (std::move (deps));
+  }
+
+  template <typename T> inline bool component_registry::
+  is_registered () const noexcept
+  {
+    std::lock_guard<std::mutex> lock (registry_mutex_);
+
+    return registered_components_.contains (std::type_index (typeid (T)));
+  }
+
+  template <typename T> inline void component_registry::
+  register_component_impl (std::vector<std::type_index> d)
+  {
+    std::lock_guard<std::mutex> lock (registry_mutex_);
+
+    auto component_id (std::type_index (typeid (T)));
+
+    if (registered_components_.contains (component_id))
+      return;
+
+    auto init_func = [] ()
+    {
+      component<T>::get ();
+    };
+
+    resolver_.register_component (component_id, init_func, std::move (d));
+    registered_components_.insert (component_id);
+  }
 }
