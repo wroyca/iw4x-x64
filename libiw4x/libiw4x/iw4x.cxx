@@ -6,6 +6,7 @@
 #include <thread>
 #include <chrono>
 
+#include <libiw4x/imgui.hxx>
 #include <libiw4x/console-win32.hxx>
 
 using namespace std;
@@ -72,6 +73,8 @@ namespace iw4x
         console.execute_command ("xblive_privatepartyclient 1");
       });
 
+      imgui i;
+
       // __scrt_common_main_seh
       //
       return reinterpret_cast<int (*) ()> (0x140358D48) ();
@@ -124,20 +127,21 @@ namespace iw4x
       // instruction. The zero displacement causes the jump to read the address
       // literal immediately following the instruction.
       //
-      array<byte, 14> sequence {{static_cast<byte> (0xFF),
-                                 static_cast<byte> (0x25),
-                                 static_cast<byte> (0x00),
-                                 static_cast<byte> (0x00),
-                                 static_cast<byte> (0x00),
-                                 static_cast<byte> (0x00),
-                                 static_cast<byte> ((source) & 0xFF),
-                                 static_cast<byte> ((source >> 8) & 0xFF),
-                                 static_cast<byte> ((source >> 16) & 0xFF),
-                                 static_cast<byte> ((source >> 24) & 0xFF),
-                                 static_cast<byte> ((source >> 32) & 0xFF),
-                                 static_cast<byte> ((source >> 40) & 0xFF),
-                                 static_cast<byte> ((source >> 48) & 0xFF),
-                                 static_cast<byte> ((source >> 56) & 0xFF)}};
+      array<std::byte, 14> sequence {
+        {static_cast<std::byte> (0xFF),
+         static_cast<std::byte> (0x25),
+         static_cast<std::byte> (0x00),
+         static_cast<std::byte> (0x00),
+         static_cast<std::byte> (0x00),
+         static_cast<std::byte> (0x00),
+         static_cast<std::byte> ((source) & 0xFF),
+         static_cast<std::byte> ((source >> 8) & 0xFF),
+         static_cast<std::byte> ((source >> 16) & 0xFF),
+         static_cast<std::byte> ((source >> 24) & 0xFF),
+         static_cast<std::byte> ((source >> 32) & 0xFF),
+         static_cast<std::byte> ((source >> 40) & 0xFF),
+         static_cast<std::byte> ((source >> 48) & 0xFF),
+         static_cast<std::byte> ((source >> 56) & 0xFF)}};
 
       DWORD old_protect (0);
 
