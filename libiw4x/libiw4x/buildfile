@@ -1,6 +1,9 @@
 intf_libs = # Interface dependencies.
 impl_libs = # Implementation dependencies.
 
+import impl_libs += libimgui-platform-win32%lib{imgui-platform-win32}
+import impl_libs += libimgui-render-dx9%lib{imgui-render-dx9}
+
 lib{iw4x}: {hxx ixx txx cxx}{** -version} \
            {hxx            }{    version} \
            $impl_libs $intf_libs
@@ -16,6 +19,14 @@ if ($config.libiw4x.develop)
 
 obja{*}: cxx.poptions += -DLIBIW4X_STATIC_BUILD
 objs{*}: cxx.poptions += -DLIBIW4X_SHARED_BUILD
+
+if ($cxx.target.class == 'windows')
+{
+  if ($cxx.target.system == 'mingw32')
+    cxx.libs += -ldbghelp
+  else
+    cxx.libs += dbghelp.lib
+}
 
 # Export options.
 #

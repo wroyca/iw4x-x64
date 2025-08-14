@@ -6,6 +6,6 @@ summary: iw4x project repository
 #location: https://pkg.cppget.org/1/stable
 #trust: ...
 
-#:
-#role: prerequisite
-#location: https://git.build2.org/hello/libhello.git
+:
+role: prerequisite
+location: https://github.com/wroyca/imgui.git#mingw
