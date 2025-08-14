@@ -39,34 +39,13 @@ namespace iw4x
       PIMAGE_NT_HEADERS n (
         ImageNtHeader (reinterpret_cast<PIMAGE_DOS_HEADER> (m)));
 
-      // Windows PE files store most offsets as RVAs, meaning offsets from the
-      // image base, not from any section start. But at runtime, each section
-      // may be mapped at a different aligned address, and the raw data size in
-      // the file may not match the virtual size in memory.
+      // For a loaded PE image in memory, RVAs can be simply converted to
+      // pointers by adding them to the module base address, since the loader
+      // has already mapped the sections to their virtual addresses.
       //
-      // This lambda walks the section table to find which section owns the RVA,
-      // then calculates the correct in-memory pointer, accounting for any gap
-      // between VirtualAddress and PointerToRawData.
-      //
-      // If the RVA doesn't land in a section, we fall back to m + rva, which
-      // works for headers and certain edge cases.
-      //
-      auto rva_to_ptr = [m, n] (DWORD rva) -> void *
+      auto rva_to_ptr = [m] (DWORD rva) -> void *
       {
-        PIMAGE_SECTION_HEADER s (IMAGE_FIRST_SECTION (n));
-
-        for (WORD i (0); i < n->FileHeader.NumberOfSections; ++i, ++s)
-        {
-          if (rva >= s->VirtualAddress &&
-              rva < s->VirtualAddress +
-                  (s->Misc.VirtualSize ? s->Misc.VirtualSize
-                                       : s->SizeOfRawData))
-          {
-            return m - (s->VirtualAddress - s->PointerToRawData) + rva;
-          }
-        }
-
-        return m + rva;
+        return reinterpret_cast<char*>(m) + rva;
       };
 
       // The OptionalHeader's DataDirectory table has an entry for the import
