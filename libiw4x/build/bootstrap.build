@@ -4,3 +4,4 @@ using version
 using config
 using install
 using dist
+using test
