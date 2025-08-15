@@ -1,5 +1,6 @@
-project = # Unnamed tests subproject.
+project = libiw4x-tests
 
+using version
 using config
-using test
 using dist
+using test
