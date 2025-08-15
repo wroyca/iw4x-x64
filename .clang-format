@@ -112,7 +112,7 @@ BraceWrapping:
 BreakAdjacentStringLiterals: false
 BreakAfterAttributes: Never
 BreakAfterJavaFieldAnnotations: false
-BreakAfterReturnType: AllDefinitions
+BreakAfterReturnType: All
 BreakArrays: true
 BreakBeforeBinaryOperators: None
 BreakBeforeConceptDeclarations: Always
