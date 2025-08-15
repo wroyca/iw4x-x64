@@ -1,6 +1,16 @@
-# Uncomment to suppress warnings coming from external libraries.
+using cxx.guess
+
+# Historically, it has been surprisingly common for developers, especially those
+# on Windows, to accidentally invoke the wrong toolchain when building this
+# project. The most frequent culprit has been starting from the MSVC "x86"
+# (32-bit) developer prompt instead of the intended "x64" one. This silently
+# causes all C++ compilation to target x86, which in our case is a build mode we
+# neither support nor test.
 #
-# cxx.internal.scope = current
+if ($cxx.target.cpu != 'x86_64')
+  fail "unsupported target cpu: $cxx.target.cpu"
+
+cxx.internal.scope = current
 
 cxx.std = latest
 
