@@ -6,6 +6,7 @@ import impl_libs += libimgui-render-dx9%lib{imgui-render-dx9}
 
 lib{iw4x}: {hxx ixx txx cxx}{** -version} \
            {hxx            }{    version} \
+           {def            }{**         } \
            $impl_libs $intf_libs
 
 # The `version.hxx` header is generated from the `version.in` template during
