@@ -95,17 +95,7 @@ namespace iw4x
       // handles retrieved with GetStdHandle will likely be invalid on startup
       // until AttachConsole is called.
       //
-      if (AttachConsole (ATTACH_PARENT_PROCESS) != 0)
-      {
-        FILE *in = nullptr, *out = nullptr, *err = nullptr;
-
-        // If this fails, there is little we can do. Treat this as best-effort
-        // redirection and suppress all errors unconditionally.
-        //
-        (void) freopen_s (&in,  "CONIN$",  "r", stdin);
-        (void) freopen_s (&out, "CONOUT$", "w", stdout);
-        (void) freopen_s (&err, "CONOUT$", "w", stderr);
-      }
+      attach_console ();
 #endif
 
       // Note that any attempt to acquire additional locks or perform complex
