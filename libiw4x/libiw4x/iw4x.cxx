@@ -25,8 +25,12 @@ namespace iw4x
       //
       ([] (auto&& _)
       {
-        _(0x1401B2FD2, 0x88, 1); // Skip xgameruntime.dll
-        _(0x1401B3096, 0x78, 1); // Ignore XGameRuntimeInitialize failure
+        _(0x1401B2FCA, 0x31, 1); // Bypass XGameRuntimeInitialize
+        _(0x1401B2FCB, 0xC0, 1); //
+        _(0x1401B2FCC, 0x90, 3); //
+        _(0x1401B308F, 0x31, 1); //
+        _(0x1401B3090, 0xC0, 1); //
+        _(0x1401B3091, 0x90, 3); //
 
         _(0x1402A6A4B, 0x90, 5); // NOP out CurlX initialization
         _(0x1402A6368, 0x90, 5); // NOP out CurlX cleanup
