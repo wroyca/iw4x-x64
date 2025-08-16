@@ -11,78 +11,6 @@ using namespace std;
 
 namespace iw4x
 {
-  namespace
-  {
-    int
-    start ()
-    {
-      // __security_init_cookie
-      //
-      reinterpret_cast<void (*) ()> (0x1403598CC) ();
-
-      // Perform IW4x-specific initialization before transferring control
-      // to the original C runtime startup. See DllMain() for context.
-      //
-      ([] (auto&& _)
-      {
-        _(0x1401B2FCA, 0x31, 1); // Bypass XGameRuntimeInitialize
-        _(0x1401B2FCB, 0xC0, 1); //
-        _(0x1401B2FCC, 0x90, 3); //
-        _(0x1401B308F, 0x31, 1); //
-        _(0x1401B3090, 0xC0, 1); //
-        _(0x1401B3091, 0x90, 3); //
-
-        _(0x1402A6A4B, 0x90, 5); // NOP out CurlX initialization
-        _(0x1402A6368, 0x90, 5); // NOP out CurlX cleanup
-
-        _(0x1402A5F70, 0x90, 3); // Skip flag clobbering
-        _(0x1402A5F73, 0x74, 1); // Bypass Xbox Live restriction
-        _(0x1400F5B86, 0xEB, 1); // Skip XBOXLIVE_SIGNINCHANGED
-        _(0x1400F5BAC, 0xEB, 1); // Skip XBOXLIVE_SIGNEDOUT
-        _(0x14010B332, 0xEB, 1); // Bypass Xbox Live permission
-        _(0x1401BA1FE, 0xEB, 1); // Always pass signed-in status
-
-        _(0x140271ED0, 0xC3, 1); // Return immediately from popup creation function (disables popups)
-
-        _(0x1400F6BC4, 0x90, 2); // Skip playlist download check
-        _(0x1400FC833, 0xEB, 1); // Skip config string mismatch (1)
-        _(0x1400D2AFC, 0x90, 2); // Skip config string mismatch (2)
-
-        _(0x1400E4DA0, 0x33, 1); // Skip crash from stats
-        _(0x1400E4DA1, 0xC0, 1); //
-        _(0x1400E4DA2, 0xC3, 1); //
-      })
-
-      ([] (uintptr_t a, int v, size_t s)
-      {
-        DWORD o (0);
-        void* p (reinterpret_cast<void*> (a));
-
-        VirtualProtect (p, s, PAGE_EXECUTE_READWRITE, &o);
-        memset (p, v, s);
-        VirtualProtect (p, s, o, &o);
-        FlushInstructionCache (GetCurrentProcess (), p, s);
-      });
-
-      console console;
-
-      console.register_command ("iw4x", [&console] ()
-      {
-        console.execute_command ("downloadplaylist");
-        console.execute_command ("xblive_privatematch 1");
-        console.execute_command ("onlinegame 0");
-        console.execute_command ("xblive_hostingprivateparty 1");
-        console.execute_command ("xblive_privatepartyclient 1");
-      });
-
-      imgui i;
-
-      // __scrt_common_main_seh
-      //
-      return reinterpret_cast<int (*) ()> (0x140358D48) ();
-    }
-  }
-
   extern "C"
   {
     // DLL entry point. Executes while the process loader lock is held.
@@ -108,7 +36,72 @@ namespace iw4x
       // constraints imposed by the loader lock.
       //
       uintptr_t target (0x140358EBC);
-      uintptr_t source (reinterpret_cast<decltype(source)> (&start));
+      uintptr_t source (reinterpret_cast<decltype (source)> (+[] ()
+      {
+        // __security_init_cookie
+        //
+        reinterpret_cast<void (*) ()> (0x1403598CC) ();
+
+        // Perform IW4x-specific initialization before transferring control
+        // to the original C runtime startup. See DllMain() for context.
+        //
+        ([] (auto&& _)
+        {
+          _(0x1401B2FCA, 0x31, 1); // Bypass XGameRuntimeInitialize
+          _(0x1401B2FCB, 0xC0, 1); //
+          _(0x1401B2FCC, 0x90, 3); //
+          _(0x1401B308F, 0x31, 1); //
+          _(0x1401B3090, 0xC0, 1); //
+          _(0x1401B3091, 0x90, 3); //
+
+          _(0x1402A6A4B, 0x90, 5); // NOP out CurlX initialization
+          _(0x1402A6368, 0x90, 5); // NOP out CurlX cleanup
+
+          _(0x1402A5F70, 0x90, 3); // Skip flag clobbering
+          _(0x1402A5F73, 0x74, 1); // Bypass Xbox Live restriction
+          _(0x1400F5B86, 0xEB, 1); // Skip XBOXLIVE_SIGNINCHANGED
+          _(0x1400F5BAC, 0xEB, 1); // Skip XBOXLIVE_SIGNEDOUT
+          _(0x14010B332, 0xEB, 1); // Bypass Xbox Live permission
+          _(0x1401BA1FE, 0xEB, 1); // Always pass signed-in status
+
+          _(0x140271ED0, 0xC3, 1); // Return immediately from popup creation function (disables popups)
+
+          _(0x1400F6BC4, 0x90, 2); // Skip playlist download check
+          _(0x1400FC833, 0xEB, 1); // Skip config string mismatch (1)
+          _(0x1400D2AFC, 0x90, 2); // Skip config string mismatch (2)
+
+          _(0x1400E4DA0, 0x33, 1); // Skip crash from stats
+          _(0x1400E4DA1, 0xC0, 1); //
+          _(0x1400E4DA2, 0xC3, 1); //
+        })
+
+        ([] (uintptr_t a, int v, size_t s)
+        {
+          DWORD o (0);
+          void* p (reinterpret_cast<void*> (a));
+
+          VirtualProtect (p, s, PAGE_EXECUTE_READWRITE, &o);
+          memset (p, v, s);
+          VirtualProtect (p, s, o, &o);
+          FlushInstructionCache (GetCurrentProcess (), p, s);
+        });
+
+        console console;
+        console.register_command ("iw4x", [&console] ()
+        {
+          console.execute_command ("downloadplaylist");
+          console.execute_command ("xblive_privatematch 1");
+          console.execute_command ("onlinegame 0");
+          console.execute_command ("xblive_hostingprivateparty 1");
+          console.execute_command ("xblive_privatepartyclient 1");
+        });
+
+        imgui imgui;
+
+        // __scrt_common_main_seh
+        //
+        return reinterpret_cast<int (*) ()> (0x140358D48) ();
+      }));
 
       // Encoding:
       //
