@@ -3,6 +3,7 @@ impl_libs = # Implementation dependencies.
 
 import impl_libs += libimgui-platform-win32%lib{imgui-platform-win32}
 import impl_libs += libimgui-render-dx9%lib{imgui-render-dx9}
+import impl_libs += libboost-locale%lib{boost_locale}
 
 lib{iw4x}: {hxx ixx txx cxx}{** -version} \
            {hxx            }{    version} \

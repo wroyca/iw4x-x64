@@ -16,3 +16,4 @@ depends: * build2 >= 0.17.0
 depends: * bpkg >= 0.17.0
 depends: libimgui-platform-win32
 depends: libimgui-render-dx9
+depends: libboost-locale
