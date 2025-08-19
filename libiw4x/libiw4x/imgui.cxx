@@ -34,6 +34,19 @@ namespace iw4x
   //
   namespace
   {
+    template <typename F, typename P> F
+    function_cast (P *p)
+    {
+      union
+      {
+        P *p;
+        F f;
+      } r;
+
+      r.p = p;
+      return r.f;
+    }
+
     // Thread-local barrier to prevent recursion in create_device.
     //
     thread_local bool create_device_barrier;

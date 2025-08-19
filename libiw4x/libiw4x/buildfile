@@ -1,14 +1,16 @@
 intf_libs = # Interface dependencies.
 impl_libs = # Implementation dependencies.
 
-import impl_libs += libimgui-platform-win32%lib{imgui-platform-win32}
-import impl_libs += libimgui-render-dx9%lib{imgui-render-dx9}
-import impl_libs += libboost-locale%lib{boost_locale}
+import intf_libs += libboost-locale%lib{boost_locale}
+import intf_libs += libimgui-platform-win32%lib{imgui-platform-win32}
+import intf_libs += libimgui-render-dx9%lib{imgui-render-dx9}
 
-lib{iw4x}: {hxx ixx txx cxx}{** -version} \
-           {hxx            }{    version} \
-           {def            }{**         } \
+lib{iw4x}: {hxx ixx txx cxx}{* -version} \
+           {hxx            }{   version} \
+           {def            }{*         } \
            $impl_libs $intf_libs
+
+lib{iw4x}: libul{iw4x}: {hxx ixx txx cxx}{utility/**} $impl_libs $intf_libs
 
 # The `version.hxx` header is generated from the `version.in` template during
 # the build. As libiw4x source is meant to be distributable (and not just

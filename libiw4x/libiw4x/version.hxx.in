@@ -19,13 +19,16 @@
 // 3.0.0-b.2    0000299999999995020
 // 2.2.0-a.1.z  0000200001999990011
 //
-#define LIBIW4X_VERSION        $libiw4x.version.project_number$ULL
+#define LIBIW4X_VERSION       $libiw4x.version.project_number$ULL
 #define LIBIW4X_VERSION_STR   "$libiw4x.version.project$"
 #define LIBIW4X_VERSION_ID    "$libiw4x.version.project_id$"
 #define LIBIW4X_VERSION_FULL  "$libiw4x.version$"
-#define LIBIW4X_VERSION_MAJOR  $libiw4x.version.major$
-#define LIBIW4X_VERSION_MINOR  $libiw4x.version.minor$
-#define LIBIW4X_VERSION_PATCH  $libiw4x.version.patch$
-#define LIBIW4X_PRE_RELEASE    $libiw4x.version.pre_release$
-#define LIBIW4X_SNAPSHOT_SN    $libiw4x.version.snapshot_sn$ULL
+
+#define LIBIW4X_VERSION_MAJOR $libiw4x.version.major$
+#define LIBIW4X_VERSION_MINOR $libiw4x.version.minor$
+#define LIBIW4X_VERSION_PATCH $libiw4x.version.patch$
+
+#define LIBIW4X_PRE_RELEASE   $libiw4x.version.pre_release$
+
+#define LIBIW4X_SNAPSHOT_SN   $libiw4x.version.snapshot_sn$ULL
 #define LIBIW4X_SNAPSHOT_ID   "$libiw4x.version.snapshot_id$"

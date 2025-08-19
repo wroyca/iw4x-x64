@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include <libiw4x/utility-win32.hxx>
+#include <libiw4x/utility/windows.hxx>
 
 namespace iw4x
 {
