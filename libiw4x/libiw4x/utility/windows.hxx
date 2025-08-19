@@ -1,8 +1,9 @@
 #pragma once
 
-#include <ios>
+#include <cassert>
 #include <memory>
 #include <string>
+#include <ostream>
 
 // Include Windows.h in a way that avoids the usual namespace pollution.
 //
@@ -32,7 +33,6 @@
 #  endif
 #endif
 
-#include <io.h>
 #include <shellapi.h>
 
 #include <boost/locale.hpp>
@@ -71,8 +71,7 @@ namespace iw4x
     //      footnotes.
     //
     //   2. Perform UTF-16 -> UTF-8 conversion at the point of access, so
-    //   callers
-    //      operate in the more idiomatic encoding without incidental
+    //      callers operate in the more idiomatic encoding without incidental
     //      boilerplate.
     //
     // TODO: Replace with https://isocpp.org/files/papers/P3474R0.html if it
@@ -97,7 +96,7 @@ namespace iw4x
           // "nothing to do". Micro-cost aside, it signals that freeing may be a
           // hot-path event and should be cheap when vacuous.
           //
-          if (p)
+          if (p != nullptr)
             ::LocalFree (p);
         }
       };
@@ -114,14 +113,15 @@ namespace iw4x
       {
       }
 
-      // Ownership injection point. Kept explicit to discourage casual
-      // conversions from unrelated pointers and to communicate that
-      // constructing this object is an operation with ownership transfer
-      // semantics, not merely a view.
+      ~arguments_t () = default;
+
+      // Ownership injection point. Kept explicit to discourage casual conversions
+      // from unrelated pointers and to communicate that constructing this object
+      // is an operation with ownership transfer semantics, not merely a view.
       //
       // Marked `noexcept` to document expectations: we are passing through a
-      // system allocation and storing two trivially movable values; failure
-      // here would indicate a broader program invariant violation rather than a
+      // system allocation and storing two trivially movable values; failure here
+      // would indicate a broader program invariant violation rather than a
       // recoverable situation.
       //
       explicit arguments_t (std::unique_ptr<wchar_t *[], local_free_deleter> a,
@@ -151,8 +151,7 @@ namespace iw4x
       {
       }
 
-      arguments_t
-      operator= (arguments_t &) = delete;
+      arguments_t operator=(arguments_t&) = delete;
 
       // Portability gap across compilers: once we introduce a copy constructor,
       // the rules for whether a move constructor or move assignment operator is
@@ -167,9 +166,8 @@ namespace iw4x
       // `main()`. The effect is subtle but catastrophic: pointers appear intact
       // at declaration, yet by first use they have evaporated to null.
       //
-      arguments_t (arguments_t &&) = default;
-      arguments_t &
-      operator= (arguments_t &&) = delete;
+      arguments_t (arguments_t&&) = default;
+      arguments_t& operator=(arguments_t&&) = delete;
 
       // Access policy: convert-on-demand.
       //
@@ -199,9 +197,40 @@ namespace iw4x
       // unambiguously, and there is no ownership or lifetime hidden behind this
       // conversion.
       //
+      explicit
       operator int () const noexcept
       {
         return size_;
+      }
+
+      friend constexpr bool
+      operator== (const arguments_t &a, int n) noexcept
+      {
+        return a.size_ == n;
+      }
+
+      friend constexpr bool
+      operator== (int n, const arguments_t &a) noexcept
+      {
+        return a.size_ == n;
+      }
+
+      friend constexpr std::strong_ordering
+      operator<=> (const arguments_t &a, int n) noexcept
+      {
+        return a.size_ <=> n;
+      }
+
+      friend constexpr std::strong_ordering
+      operator<=> (int n, const arguments_t &a) noexcept
+      {
+        return n <=> a.size_;
+      }
+
+      friend std::ostream&
+      operator<< (std::ostream& os, const arguments_t& a)
+      {
+        return os << a.size_;
       }
 
       // Indexing preserves the familiar surface (`argv[i]`) while keeping the

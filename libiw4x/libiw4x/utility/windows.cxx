@@ -1,6 +1,9 @@
 #include <libiw4x/utility/windows.hxx>
 
 #include <iostream>
+#include <ios>
+
+#include <io.h>
 
 using namespace std;
 
