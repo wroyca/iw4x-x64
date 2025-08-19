@@ -24,24 +24,45 @@ namespace iw4x
       if (fdwReason != DLL_PROCESS_ATTACH)
         return TRUE;
 
-#if LIBIW4X_DEVELOP
-      // IW4 was linked with /SUBSYSTEM:WINDOWS which implies to the operating
-      // system that a console is not needed. In that instance, the standard
-      // handles retrieved with GetStdHandle will likely be invalid on startup
-      // until AttachConsole is called.
-      //
       attach_console ();
-#endif
 
-      // Note that any attempt to acquire additional locks or perform complex
-      // operations risks violating internal ordering guarantees. The strategy
-      // here is to patch IW4's startup routine to execute our code outside the
-      // constraints imposed by the loader lock.
+      // DllMain executes while the process loader lock is held.
+      //
+      // This is one of the few contexts where the operating system invokes our
+      // code under a low-level synchronization primitive. Any attempt to
+      // perform nontrivial work here risks deadlock or subtle ordering
+      // violations.
+      //
+      // To avoid this, we do not initialize directly in DllMain. Instead, we
+      // patch the executable's startup routine so that our setup runs later on
+      // IW4's main thread, outside the constraints imposed by the loader lock.
+      //
+      // The patch itself is just a manual memory write. This is by design: the
+      // less we do in a DLL entry point, the better. Introducing dynamic
+      // behavior here would only enlarge the set of things that can go wrong.
+      //
+      // The unusual `+[](){}` syntax below is also intentional:
+      //
+      // - A lambda with no captures can decay to a plain function pointer, but
+      //   only if coerced into its addressable form. The unary plus (`+`)
+      //   triggers that decay, yielding a function pointer rather than a
+      //   closure object.
+      //
+      // - In effect, `+[](){}` says “inline free function, defined here.”
+      //   It avoids introducing a separate `static` helper that would leak
+      //   into the surrounding namespace.
+      //
+      // - The form is also a declaration of intent: the function has no hidden
+      //   state, and its semantics are identical to those of a free function,
+      //   only expressed locally.
       //
       uintptr_t target (0x140358EBC);
       uintptr_t source (reinterpret_cast<decltype (source)> (+[] ()
       {
-        // __security_init_cookie
+        // The CRT startup sequence normally begins by seeding its own internal
+        // security cookie. This is the value checked by /GS instrumentation to
+        // detect stack corruption. We must call `__security_init_cookie()`
+        // ourselves here to preserve the compiler's expected invariants.
         //
         reinterpret_cast<void (*) ()> (0x1403598CC) ();
 
@@ -101,45 +122,61 @@ namespace iw4x
 
         imgui imgui;
 
-        // __scrt_common_main_seh
+        // After the cookie has been seeded, the standard CRT entry point would
+        // transfer control to `__scrt_common_main_seh()`.
         //
         return reinterpret_cast<int (*) ()> (0x140358D48) ();
       }));
 
-      // Encoding:
+      // Encoding a 64-bit absolute jump:
       //
-      //   FF 25 00000000 ; JMP QWORD PTR [RIP + 0] <64-bit address>
-      //   Absolute destination (little-endian)
+      // - FF 25 00000000   ; JMP QWORD PTR [RIP + 0]
+      // - <64-bit address> ; Absolute destination in little-endian
       //
-      // RIP-relative memory operands are computed relative to the next
-      // instruction. The zero displacement causes the jump to read the address
-      // literal immediately following the instruction.
+      // On x86-64, the `jmp` instruction does not provide an immediate
+      // absolute form. Instead, the canonical way to transfer control to a
+      // 64-bit address is via an indirect jump through memory. The form
+      // `FF /4` encodes `jmp r/m64`, and when paired with a RIP-relative
+      // addressing mode, it allows embedding the destination address as a
+      // literal directly after the instruction.
       //
-      array<std::byte, 14> sequence {
-        {static_cast<std::byte> (0xFF),
-         static_cast<std::byte> (0x25),
-         static_cast<std::byte> (0x00),
-         static_cast<std::byte> (0x00),
-         static_cast<std::byte> (0x00),
-         static_cast<std::byte> (0x00),
-         static_cast<std::byte> ((source) & 0xFF),
-         static_cast<std::byte> ((source >> 8) & 0xFF),
-         static_cast<std::byte> ((source >> 16) & 0xFF),
-         static_cast<std::byte> ((source >> 24) & 0xFF),
-         static_cast<std::byte> ((source >> 32) & 0xFF),
-         static_cast<std::byte> ((source >> 40) & 0xFF),
-         static_cast<std::byte> ((source >> 48) & 0xFF),
-         static_cast<std::byte> ((source >> 56) & 0xFF)}};
+      // With a displacement of zero, the effective address becomes
+      // "RIP + 0", that is, the address immediately following the
+      // instruction. The processor fetches the 64-bit value stored there and
+      // uses it as the jump target.
+      //
+      // The resulting sequence is 14 bytes total: six bytes for the opcode
+      // and displacement, followed by the eight-byte absolute address.
+      //
+      array<std::byte, 14> sequence
+      {
+        {
+          static_cast<std::byte> (0xFF),
+          static_cast<std::byte> (0x25),
+          static_cast<std::byte> (0x00),
+          static_cast<std::byte> (0x00),
+          static_cast<std::byte> (0x00),
+          static_cast<std::byte> (0x00),
+          static_cast<std::byte> ((source)       & 0xFF),
+          static_cast<std::byte> ((source >> 8)  & 0xFF),
+          static_cast<std::byte> ((source >> 16) & 0xFF),
+          static_cast<std::byte> ((source >> 24) & 0xFF),
+          static_cast<std::byte> ((source >> 32) & 0xFF),
+          static_cast<std::byte> ((source >> 40) & 0xFF),
+          static_cast<std::byte> ((source >> 48) & 0xFF),
+          static_cast<std::byte> ((source >> 56) & 0xFF)
+        }
+      };
 
-      DWORD old_protect (0);
+      DWORD o (0);
 
       if (VirtualProtect (reinterpret_cast<LPVOID> (target),
                           sequence.size (),
                           PAGE_EXECUTE_READWRITE,
-                          &old_protect) == 0)
+                          &o) == 0)
       {
         cerr << "error: unable to change page protection at address "
-             << hex << target << dec << "\n";
+             << hex << target << dec << endl;
 
         return FALSE;
       }
@@ -148,7 +185,7 @@ namespace iw4x
                   sequence.data (),
                   sequence.size ()) == nullptr)
       {
-        cerr << "error: unable to copy jump instruction to target address "
+        cerr << "error: unable to copy instruction sequence to target address "
              << hex << target << dec << "\n";
 
         return FALSE;
@@ -156,8 +193,8 @@ namespace iw4x
 
       if (VirtualProtect (reinterpret_cast<LPVOID> (target),
                           sequence.size (),
-                          old_protect,
-                          &old_protect) == 0)
+                          o,
+                          &o) == 0)
       {
         cerr << "warning: unable to restore page protection at address "
              << hex << target << dec << "\n";

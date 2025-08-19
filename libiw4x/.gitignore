@@ -20,7 +20,7 @@
 *.pdb
 *.ilk
 *.exe
-*.exe.dlls/
+*.exe.dlls
 *.exe.manifest
 *.pc
 

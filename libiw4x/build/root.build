@@ -3,9 +3,9 @@ using cxx.guess
 # Historically, it has been surprisingly common for developers, especially those
 # on Windows, to accidentally invoke the wrong toolchain when building this
 # project. The most frequent culprit has been starting from the MSVC "x86"
-# (32-bit) developer prompt instead of the intended "x64" one. This silently
-# causes all C++ compilation to target x86, which in our case is a build mode we
-# neither support nor test.
+# developer prompt instead of the intended "x64" one. This silently causes all
+# C++ compilation to target x86, which in our case is a build mode we neither
+# support nor test.
 #
 if ($cxx.target.cpu != 'x86_64')
   fail "unsupported target cpu: $cxx.target.cpu"
@@ -20,6 +20,10 @@ hxx{*}: extension = hxx
 ixx{*}: extension = ixx
 txx{*}: extension = txx
 cxx{*}: extension = cxx
+
+# The test target for cross-testing (running tests under Wine, etc).
+#
+test.target = $cxx.target
 
 # Pre-defined semantics to distinguish between development and consumption
 # builds.
