@@ -1,9 +1,9 @@
 intf_libs = # Interface dependencies.
 impl_libs = # Implementation dependencies.
 
-lib{iw4x}: {hxx ixx txx cxx}{* -version} \
-           {hxx            }{   version} \
-           {def            }{*         } \
+lib{iw4x}: {hxx ixx txx cxx}{* -version -options} \
+           {hxx            }{   version         } \
+           {def            }{*                  } \
            $impl_libs $intf_libs
 
 lib{iw4x}: libul{iw4x}: {hxx ixx txx cxx}{utility/**} $impl_libs $intf_libs

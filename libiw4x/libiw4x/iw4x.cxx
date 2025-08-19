@@ -1,7 +1,5 @@
 #include <libiw4x/iw4x.hxx>
 
-#include <libiw4x/utility/windows.hxx>
-
 using namespace std;
 
 namespace iw4x
