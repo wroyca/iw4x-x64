@@ -10,6 +10,12 @@ using cxx.guess
 if ($cxx.target.cpu != 'x86_64')
   fail "unsupported target cpu: $cxx.target.cpu"
 
+using in
+
+define cli: file
+
+cli{*}: extension = cli
+
 cxx.internal.scope = current
 
 cxx.std = latest
@@ -29,3 +35,4 @@ test.target = $cxx.target
 # builds.
 #
 config [bool] config.libiw4x.develop ?= false
+develop = $config.libiw4x.develop # shorthand

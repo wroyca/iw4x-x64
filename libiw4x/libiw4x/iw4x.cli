@@ -1,0 +1,10 @@
+namespace iw4x
+{
+  class options
+  {
+    bool --version
+    {
+      "Print version and exit."
+    };
+  };
+}

@@ -1,7 +1,7 @@
 #include <libiw4x/utility/windows.hxx>
 
-#include <iostream>
 #include <ios>
+#include <iostream>
 
 #include <io.h>
 
