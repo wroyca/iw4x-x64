@@ -1,9 +1,8 @@
 #pragma once
 
-#include <cassert>
 #include <memory>
-#include <string>
 #include <ostream>
+#include <string>
 
 // Include Windows.h in a way that avoids the usual namespace pollution.
 //
@@ -70,14 +69,13 @@ namespace iw4x
     //      resource management follows C++ expectations rather than Windows
     //      footnotes.
     //
-    //   2. Perform UTF-16 -> UTF-8 conversion at the point of access, so
-    //      callers operate in the more idiomatic encoding without incidental
-    //      boilerplate.
+    //   2. Translate arguments from UTF-16 to UTF-8 up front, so call sites
+    //      never pay the cost of remembering which encoding they are in. The
+    //      interface speaks UTF-8 because the language around it does.
     //
     // TODO: Replace with https://isocpp.org/files/papers/P3474R0.html if it
     // ever becomes accepted and/or an implementation is made available (for
-    // example, via Boost). At that point this bespoke wrapper should be retired
-    // in favour of the standard abstraction.
+    // example, via Boost).
     //
     struct arguments_t
     {
@@ -97,170 +95,150 @@ namespace iw4x
           // hot-path event and should be cheap when vacuous.
           //
           if (p != nullptr)
+          {
             ::LocalFree (p);
+          }
         }
       };
 
-      std::unique_ptr<wchar_t *[], local_free_deleter> argv_;
-      int size_ {0};
+      using argv = std::unique_ptr<wchar_t *[], local_free_deleter>;
+      using argc = int;
+      using args = std::vector<std::string>;
+      using argp = std::vector<char *>;
 
-      // Default construction chooses "current process" because that is the only
-      // stable source we can reasonably standardize on. Anything more general
-      // would reopen things we do not want this type to arbitrate.
+      // Construct by capturing the command line once, exactly as Windows parses
+      // it. We make no attempt to reinterpret or override the OS' splitting
+      // rules; they are treated as authoritative.
       //
       arguments_t ()
-        : arguments_t (from_current_process ())
+        : argc_ (0),
+          argv_ (CommandLineToArgvW (GetCommandLineW (), &argc_))
       {
+        argc_ = argv_ ? argc_ : 0;
+
+        // All conversions to UTF-8 are performed eagerly. Arguments are
+        // immutable for the process lifetime, so it's cleaner and cheaper to
+        // cache the results once than to redo work on every access. The
+        // interface exposed is therefore in UTF-8 only: the UTF-16 origin is an
+        // implementation detail.
+        //
+        args_.reserve (static_cast<size_t> (argc_)),
+          std::transform (argv_.get (),
+                          argv_.get () + argc_,
+                          std::back_inserter (args_),
+                          [] (const wchar_t *w) -> std::string
+        {
+          // Null entries should not escape as undefined behavior. We normalize
+          // them into empty strings so every slot yields a value. This avoids
+          // exposing call sites to irregularities they are not equipped to
+          // handle.
+          //
+          return w != nullptr
+            ? boost::locale::conv::utf_to_utf<std::string::value_type> (w)
+            : std::string ();
+        });
+
+        // Traditional `char**` array for compatibility with C-style interfaces.
+        //
+        argp_.reserve (static_cast<size_t> (argc_)),
+          std::transform (args_.begin (),
+                          args_.end (),
+                          argp_.begin (),
+                          [] (const std::string &s)
+        {
+          return const_cast<char *> (s.c_str ());
+        });
       }
 
       ~arguments_t () = default;
 
-      // Ownership injection point. Kept explicit to discourage casual conversions
-      // from unrelated pointers and to communicate that constructing this object
-      // is an operation with ownership transfer semantics, not merely a view.
+      // Copy construction here is a deliberately narrow feature. Rather than
+      // duplicating the entire buffer and cache, which would be expensive and
+      // semantically dubious, we preserve only the count. The rationale is
+      // ergonomic: many codebases are written with the `argc, argv` dual in
+      // mind, and it is useful to mimic that convention without carrying the
+      // full baggage of duplicated state.
       //
-      // Marked `noexcept` to document expectations: we are passing through a
-      // system allocation and storing two trivially movable values; failure here
-      // would indicate a broader program invariant violation rather than a
-      // recoverable situation.
-      //
-      explicit arguments_t (std::unique_ptr<wchar_t *[], local_free_deleter> a,
-                            int n) noexcept
-        : argv_ (std::move (a)),
-          size_ (n)
-      {
-      }
-
-      // Copy constructor: count-only.
-      //
-      // The copy use case we care about is ergonomic: `auto argc (argv);` to
-      // mirror conventional patterns in surrounding code. Duplicating the
-      // buffer would be the wrong kind of convenience: expensive and still
-      // unable to reproduce the system's exact allocation semantics. We
-      // therefore copy the count and make the absence of data explicit.
-      //
-      // This is an intentional deviation from "copy means two equal objects".
-      // Here, copy means "propagate the aspect callers actually want", which is
-      // the count. The alternative is to forbid copy outright and force callers
-      // to write it out manually; experience suggests that buys little while
-      // inviting more boilerplate.
+      // The absence of a deep copy is not an oversight but a signal:
+      // duplicating Windows' internal allocation is neither practical nor
+      // meaningful. Better to expose that reality directly than to pretend at
+      // equivalence we cannot guarantee. Thus, copy means "count only," a
+      // relaxation of the usual "copy means equality" rule.
       //
       arguments_t (const arguments_t &o) noexcept
-        : argv_ (nullptr),
-          size_ (o.size_)
+        : argc_ (o.argc_)
       {
       }
 
-      arguments_t operator=(arguments_t&) = delete;
+      // Copy assignment is explicitly deleted. Once again the reasoning is not
+      // that it would be impossible to define, but that it would be misleading
+      // if we tried. Assignment usually implies a form of equivalence, that is,
+      // the left now behaves exactly like the right. But in this design we
+      // cannot, and do not wish to, reproduce the buffer state. Rather than
+      // provide an operation that half-delivers on its promise, we refuse it
+      // outright.
+      //
+      arguments_t &operator= (const arguments_t &) = delete;
 
-      // Portability gap across compilers: once we introduce a copy constructor,
-      // the rules for whether a move constructor or move assignment operator is
-      // still implicitly declared diverge. Some compilers (for example, Clang
-      // in MinGW mode) continue to generate one, others suppress it. The net
-      // result is not merely cosmetic but semantic: in the presence of an
-      // implicitly declared move, temporaries may transfer `unique_ptr`
-      // ownership rather than following our intended "count-only" semantics.
+      // Move operations, however, are defaulted. Moving expresses exactly the
+      // semantics we want: one object transfers ownership of the buffer and
+      // cache to another, leaving the source empty. The cost is negligible, and
+      // the meaning is unambiguous.
       //
-      // In practice this means the buffer can be released (via `LocalFree`)
-      // while we still expect `argv` entries to remain valid throughout
-      // `main()`. The effect is subtle but catastrophic: pointers appear intact
-      // at declaration, yet by first use they have evaporated to null.
-      //
-      arguments_t (arguments_t&&) = default;
-      arguments_t& operator=(arguments_t&&) = delete;
+      arguments_t (arguments_t &&) = default;
+      arguments_t &operator= (arguments_t &&) = default;
 
-      // Access policy: convert-on-demand.
+      // Implicit conversion to `int` mirrors the longstanding "argc is an
+      // integer" convention. In most cases, this is exactly how we think
+      // of argument counts, and introducing an explicit `count()` method would
+      // serve no clarifying purpose.
       //
-      // We convert UTF-16 -> UTF-8 at the point of access rather than up front.
-      // The cost model is that accesses are typically sparse (a handful of
-      // flags or paths), and forced eager conversion risks paying for strings
-      // nobody reads. Deferring also keeps failure modes local: if a particular
-      // argument is ill-formed, the exception (or error signaling, if the
-      // converter uses one) is thrown where the value is actually consumed.
+      // Normally, implicit conversions are frowned upon because they obscure
+      // intent or hide expensive operations. Here, neither applies: the target
+      // type communicates the intent unambiguously, and there is no ownership
+      // or lifetime hidden behind this conversion.
       //
-      // Note that we use an `assert()` for bounds in debug builds. The intent
-      // is to catch programming errors early without promoting index validation
-      // to a runtime cost in paths that already know their indices.
-      //
-      std::string
-      utf8_at (int i) const
-      {
-        assert (i >= 0 && i < size_);
-        const wchar_t *w (argv_ ? argv_ [i] : nullptr);
-        return w ? boost::locale::conv::utf_to_utf<char> (w) : std::string ();
-      }
-
-      // Implicit conversion to int encourages continuity with existing patterns
-      // ("argc as an integer") without inventing a new method name for the same
-      // concept. The usual concern with implicit conversions (i.e. loss of
-      // clarity) does not apply here: the target type communicates the intent
-      // unambiguously, and there is no ownership or lifetime hidden behind this
-      // conversion.
-      //
-      explicit
       operator int () const noexcept
       {
-        return size_;
+        return argc_;
       }
 
-      friend constexpr bool
-      operator== (const arguments_t &a, int n) noexcept
+      operator int & () noexcept
       {
-        return a.size_ == n;
+        return argc_;
       }
 
-      friend constexpr bool
-      operator== (int n, const arguments_t &a) noexcept
+      operator char ** () const
       {
-        return a.size_ == n;
+        return argp_.data ();
       }
 
-      friend constexpr std::strong_ordering
-      operator<=> (const arguments_t &a, int n) noexcept
+      const char *
+      operator[] (int i)
       {
-        return a.size_ <=> n;
+        if (i < 0 || i >= argc_)
+          throw std::out_of_range ("argc index out of range");
+
+        return args_ [static_cast<size_t> (i)].c_str ();
       }
 
-      friend constexpr std::strong_ordering
-      operator<=> (int n, const arguments_t &a) noexcept
-      {
-        return n <=> a.size_;
-      }
-
-      friend std::ostream&
-      operator<< (std::ostream& os, const arguments_t& a)
-      {
-        return os << a.size_;
-      }
-
-      // Indexing preserves the familiar surface (`argv[i]`) while keeping the
-      // UTF-8 policy centralized in `utf8_at()`. Note that we deliberately
-      // avoid returning wide strings here to prevent accidental reintroduction
-      // of UTF-16 into higher layers that are otherwise narrow-by-design.
+      // Stream output prints only the count. The choice is deliberate: we do
+      // not attempt to serialize the full argument list, since that would raise
+      // more questions than it answers (formatting, quoting, truncation, etc).
+      // Instead, `<<` follows the same semantics as comparison: it treats the
+      // object as equivalent to its count.
       //
-      std::string
-      operator[] (int i) const
+      friend constexpr std::ostream &
+      operator<< (std::ostream &os, const arguments_t &a)
       {
-        return utf8_at (i);
+        return os << a.argc_;
       }
 
-      // Single choke point for parsing and ownership capture.
-      //
-      // Concentrating the `GetCommandLineW()`/`CommandLineToArgvW()` pairing
-      // here avoids duplicating parsing/quoting knowledge and, more
-      // importantly, centralizes the lifetime hand-off into one place. If
-      // Windows ever changes quoting rules or we need to interpose additional
-      // validation, there is a single site to adjust.
-      //
-      static arguments_t
-      from_current_process () noexcept
-      {
-        int n (0);
-        std::unique_ptr<wchar_t *[], local_free_deleter> a (
-          CommandLineToArgvW (GetCommandLineW (), &n));
-
-        return arguments_t {std::move (a), n};
-      }
+    private:
+      argc argc_;
+      argv argv_;
+      args args_;
+      argp mutable argp_;
     };
   }
 }
