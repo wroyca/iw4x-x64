@@ -139,11 +139,13 @@ namespace iw4x
         });
 
         // Traditional `char**` array for compatibility with C-style interfaces.
+        // Note that the pointers here alias `args_` storage; they are never
+        // owned independently.
         //
         argp_.reserve (static_cast<size_t> (argc_)),
           std::transform (args_.begin (),
                           args_.end (),
-                          argp_.begin (),
+                          std::back_inserter (argp_),
                           [] (const std::string &s)
         {
           return const_cast<char *> (s.c_str ());
@@ -211,6 +213,11 @@ namespace iw4x
       operator char ** () const
       {
         return argp_.data ();
+      }
+
+      operator const char * const * () const
+      {
+        return const_cast<const char *const *> (argp_.data ());
       }
 
       const char *
