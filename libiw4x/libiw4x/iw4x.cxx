@@ -133,7 +133,7 @@ namespace iw4x
         return reinterpret_cast<int (*) ()> (0x140358D48) ();
       }));
 
-      // Encoding a 64-bit absolute jump:
+      // Encode a 64-bit absolute jump:
       //
       // - FF 25 00000000   ; JMP QWORD PTR [RIP + 0]
       // - <64-bit address> ; Absolute destination in little-endian
@@ -205,6 +205,16 @@ namespace iw4x
              << hex << target << dec << "\n";
       }
 
+      // On x86 and x86-64 architectures, flushing the instruction cache is
+      // generally unnecessary provided that both code modification and
+      // execution occur via the same linear address. In practice, it's
+      // recommended to always invoke FlushInstructionCache and allow the
+      // operating system to determine whether any action is required.
+      //
+      // For reference, see Intel(R) 64 and IA-32 Architectures Software
+      // Developer's Manual, Volume 3A: System Programming Guide, Part 1,
+      // Section 11.6: "Self-Modifying Code".
+      //
       if (FlushInstructionCache (GetCurrentProcess (),
                                  reinterpret_cast<LPCVOID> (target),
                                  sequence.size ()) == 0)
