@@ -41,20 +41,25 @@ namespace iw4x
       // less we do in a DLL entry point, the better. Introducing dynamic
       // behavior here would only enlarge the set of things that can go wrong.
       //
-      // The unusual `+[](){}` syntax below is also intentional:
+      // Note also that our executable's startup routine is in actually Windows
+      // CRT startup which relies on a pair of well-known routines to initialize
+      // it internal state: namely, __security_init_cookie (which sets up the
+      // stack cookie for buffer overrun protection) and __scrt_common_main_seh
+      // (which performs the actual C runtime startup).
       //
-      // - A lambda with no captures can decay to a plain function pointer, but
-      //   only if coerced into its addressable form. The unary plus (`+`)
-      //   triggers that decay, yielding a function pointer rather than a
-      //   closure object.
+      // These two routines are part of the compiler-provided runtime and are
+      // treated as opaque internals of the toolchain. For this reason, we
+      // deliberately avoid creating delegate types or symbolic wrappers for
+      // them, unlike the rest of our system-level patch points. They are called
+      // directly via hardcoded addresses with explicit reinterpret_casts, as
+      // these are transitional control transfers into non-user code, not
+      // application-level function references.
       //
-      // - In effect, `+[](){}` says “inline free function, defined here.”
-      //   It avoids introducing a separate `static` helper that would leak
-      //   into the surrounding namespace.
-      //
-      // - The form is also a declaration of intent: the function has no hidden
-      //   state, and its semantics are identical to those of a free function,
-      //   only expressed locally.
+      // This distinction is intentional: we do not expect readers or
+      // maintainers to interact with or override these symbols; they represent
+      // fixed CRT behavior. That is, we avoid symbolic abstraction to signal
+      // that these calls are special-case bootstrap mechanisms outside the
+      // application's purview.
       //
       uintptr_t target (0x140358EBC);
       uintptr_t source (reinterpret_cast<decltype (source)> (+[] ()
