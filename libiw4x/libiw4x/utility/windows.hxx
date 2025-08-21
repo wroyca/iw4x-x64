@@ -139,7 +139,7 @@ namespace iw4x
         });
 
         // Traditional `char**` array for compatibility with C-style interfaces.
-        // Note that the pointers here alias `args_` storage; they are never
+        // Note that pointers here alias `args_` storage; they are never
         // owned independently.
         //
         argp_.reserve (static_cast<size_t> (argc_)),
@@ -172,34 +172,10 @@ namespace iw4x
       {
       }
 
-      // Copy assignment is explicitly deleted. Once again the reasoning is not
-      // that it would be impossible to define, but that it would be misleading
-      // if we tried. Assignment usually implies a form of equivalence, that is,
-      // the left now behaves exactly like the right. But in this design we
-      // cannot, and do not wish to, reproduce the buffer state. Rather than
-      // provide an operation that half-delivers on its promise, we refuse it
-      // outright.
-      //
       arguments_t &operator= (const arguments_t &) = delete;
+      arguments_t (arguments_t &&) = delete;
+      arguments_t &operator= (arguments_t &&) = delete;
 
-      // Move operations, however, are defaulted. Moving expresses exactly the
-      // semantics we want: one object transfers ownership of the buffer and
-      // cache to another, leaving the source empty. The cost is negligible, and
-      // the meaning is unambiguous.
-      //
-      arguments_t (arguments_t &&) = default;
-      arguments_t &operator= (arguments_t &&) = default;
-
-      // Implicit conversion to `int` mirrors the longstanding "argc is an
-      // integer" convention. In most cases, this is exactly how we think
-      // of argument counts, and introducing an explicit `count()` method would
-      // serve no clarifying purpose.
-      //
-      // Normally, implicit conversions are frowned upon because they obscure
-      // intent or hide expensive operations. Here, neither applies: the target
-      // type communicates the intent unambiguously, and there is no ownership
-      // or lifetime hidden behind this conversion.
-      //
       operator int () const noexcept
       {
         return argc_;
@@ -229,12 +205,6 @@ namespace iw4x
         return args_ [static_cast<size_t> (i)].c_str ();
       }
 
-      // Stream output prints only the count. The choice is deliberate: we do
-      // not attempt to serialize the full argument list, since that would raise
-      // more questions than it answers (formatting, quoting, truncation, etc).
-      // Instead, `<<` follows the same semantics as comparison: it treats the
-      // object as equivalent to its count.
-      //
       friend constexpr std::ostream &
       operator<< (std::ostream &os, const arguments_t &a)
       {
