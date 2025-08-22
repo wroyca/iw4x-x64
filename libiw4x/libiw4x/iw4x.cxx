@@ -16,8 +16,6 @@ namespace iw4x
 {
   extern "C"
   {
-    // DLL entry point. Executes while the process loader lock is held.
-    //
     BOOL WINAPI
     DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     {
