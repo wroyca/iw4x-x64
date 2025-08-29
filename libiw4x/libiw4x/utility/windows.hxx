@@ -205,7 +205,7 @@ namespace iw4x
         return args_ [static_cast<size_t> (i)].c_str ();
       }
 
-      friend constexpr std::ostream &
+      friend std::ostream &
       operator<< (std::ostream &os, const arguments_t &a)
       {
         return os << a.argc_;
