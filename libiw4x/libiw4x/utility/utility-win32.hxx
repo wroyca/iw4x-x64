@@ -27,3 +27,12 @@
 #    include <windows.h>
 #  endif
 #endif
+
+namespace iw4x
+{
+  namespace utility
+  {
+    void
+    attach_console ();
+  }
+}

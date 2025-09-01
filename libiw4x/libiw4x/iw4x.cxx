@@ -1,6 +1,12 @@
 #include <libiw4x/iw4x.hxx>
 
+#include <array>
+#include <iostream>
+
+#include <libiw4x/utility/utility-win32.hxx>
+
 using namespace std;
+using namespace iw4x::utility;
 
 namespace iw4x
 {
@@ -11,6 +17,145 @@ namespace iw4x
     {
       if (fdwReason != DLL_PROCESS_ATTACH)
         return TRUE;
+
+      // DllMain executes while the process loader lock is held.
+      //
+      // This is one of the few contexts where the operating system invokes our
+      // code under a low-level synchronization primitive. Any attempt to
+      // perform nontrivial work here risks deadlock or subtle ordering
+      // violations.
+      //
+      // To avoid this, we do not initialize directly in DllMain. Instead, we
+      // patch the executable's startup routine so that our setup runs later on
+      // IW4's main thread, outside the constraints imposed by the loader lock.
+      //
+      // The patch itself is just a manual memory write. This is by design: the
+      // less we do in a DLL entry point, the better. Introducing dynamic
+      // behavior here would only enlarge the set of things that can go wrong.
+      //
+      // Note also that our executable's startup routine is in actually Windows
+      // CRT startup which relies on a pair of well-known routines to initialize
+      // it internal state: namely, __security_init_cookie (which sets up the
+      // stack cookie for buffer overrun protection) and __scrt_common_main_seh
+      // (which performs the actual C runtime startup).
+      //
+      // These two routines are part of the compiler-provided runtime and are
+      // treated as opaque internals of the toolchain. For this reason, we
+      // deliberately avoid creating delegate types or symbolic wrappers for
+      // them, unlike the rest of our system-level patch points. They are called
+      // directly via hardcoded addresses with explicit reinterpret_casts, as
+      // these are transitional control transfers into non-user code, not
+      // application-level function references.
+      //
+      // This distinction is intentional: we do not expect readers or
+      // maintainers to interact with or override these symbols; they represent
+      // fixed CRT behavior. That is, we avoid symbolic abstraction to signal
+      // that these calls are special-case bootstrap mechanisms outside the
+      // application's purview.
+      //
+      uintptr_t target (0x140358EBC);
+      uintptr_t source (reinterpret_cast<decltype (source)> (+[] ()
+      {
+        // __security_init_cookie
+        //
+        reinterpret_cast<void (*) ()> (0x1403598CC) ();
+
+        // __scrt_common_main_seh
+        //
+        return reinterpret_cast<int (*) ()> (0x140358D48) ();
+      }));
+
+      // Encode our 64-bit absolute jump:
+      //
+      // - FF 25 00000000   ; JMP QWORD PTR [RIP + 0]
+      // - <64-bit address> ; Absolute destination in little-endian
+      //
+      // On x86-64, the `jmp` instruction does not provide an immediate
+      // absolute form. Instead, the canonical way to transfer control to a
+      // 64-bit address is via an indirect jump through memory. The form
+      // `FF /4` encodes `jmp r/m64`, and when paired with a RIP-relative
+      // addressing mode, it allows embedding the destination address as a
+      // literal directly after the instruction.
+      //
+      // With a displacement of zero, the effective address becomes
+      // "RIP + 0", that is, the address immediately following the
+      // instruction. The processor fetches the 64-bit value stored there and
+      // uses it as the jump target.
+      //
+      // The resulting sequence is 14 bytes total: six bytes for the opcode
+      // and displacement, followed by the eight-byte absolute address.
+      //
+      array<unsigned char, 14> sequence
+      {
+        {
+          static_cast<unsigned char> (0xFF),
+          static_cast<unsigned char> (0x25),
+          static_cast<unsigned char> (0x00),
+          static_cast<unsigned char> (0x00),
+          static_cast<unsigned char> (0x00),
+          static_cast<unsigned char> (0x00),
+          static_cast<unsigned char> ((source)       & 0xFF),
+          static_cast<unsigned char> ((source >> 8)  & 0xFF),
+          static_cast<unsigned char> ((source >> 16) & 0xFF),
+          static_cast<unsigned char> ((source >> 24) & 0xFF),
+          static_cast<unsigned char> ((source >> 32) & 0xFF),
+          static_cast<unsigned char> ((source >> 40) & 0xFF),
+          static_cast<unsigned char> ((source >> 48) & 0xFF),
+          static_cast<unsigned char> ((source >> 56) & 0xFF)
+        }
+      };
+
+      attach_console ();
+
+      DWORD o (0);
+
+      if (VirtualProtect (reinterpret_cast<LPVOID> (target),
+                          sequence.size (),
+                          PAGE_EXECUTE_READWRITE,
+                          &o) == 0)
+      {
+        cerr << "error: unable to change page protection at address "
+             << hex << target << dec << endl;
+
+        return FALSE;
+      }
+
+      if (memcpy (reinterpret_cast<void *> (target),
+                  sequence.data (),
+                  sequence.size ()) == nullptr)
+      {
+        cerr << "error: unable to copy instruction sequence to target address "
+             << hex << target << dec << "\n";
+
+        return FALSE;
+      }
+
+      if (VirtualProtect (reinterpret_cast<LPVOID> (target),
+                          sequence.size (),
+                          o,
+                          &o) == 0)
+      {
+        cerr << "warning: unable to restore page protection at address "
+             << hex << target << dec << "\n";
+      }
+
+      // On x86 and x86-64 architectures, flushing the instruction cache is
+      // generally unnecessary provided that both code modification and
+      // execution occur via the same linear address. In practice, it's
+      // recommended to always invoke FlushInstructionCache and allow the
+      // operating system to determine whether any action is required.
+      //
+      // For reference, see Intel(R) 64 and IA-32 Architectures Software
+      // Developer's Manual, Volume 3A: System Programming Guide, Part 1,
+      // Section 11.6: "Self-Modifying Code".
+      //
+      if (FlushInstructionCache (GetCurrentProcess (),
+                                 reinterpret_cast<LPCVOID> (target),
+                                 sequence.size ()) == 0)
+      {
+        cerr << "warning: unable to flush instruction cache at address "
+             << hex << target << dec << "\n";
+      }
 
       // Successful DLL_PROCESS_ATTACH.
       //
