@@ -16,5 +16,6 @@ depends: * build2 >= 0.17.0
 depends: * bpkg >= 0.17.0
 depends: * cli >= 1.2.0 ? ($config.libiw4x.develop)
 depends: libboost-locale
+depends: libboost-stacktrace
 depends: libimgui-platform-win32
 depends: libimgui-render-dx9
