@@ -21,4 +21,3 @@
 # Use `linguist-generated` attribute to mark or unmark paths to be ignored for
 # the repository's language statistics and hidden by default in diffs.
 #
-libiw4x/libiw4x/pregenerated/** linguist-generated=true
