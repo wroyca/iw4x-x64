@@ -1,7 +1,16 @@
 #pragma once
 
+#include <cstddef>
 #include <exception>
-#include <ostream>
+#include <iostream>
+#include <mutex>
+#include <string>
+#include <vector>
+
+#include <Zydis/Zydis.h>
+#include <Zycore/Zycore.h>
+
+#include <libiw4x/utility/utility-win32.hxx>
 
 #include <libiw4x/export.hxx>
 
@@ -9,6 +18,11 @@ namespace iw4x
 {
   namespace detour
   {
+    namespace details
+    {
+      inline std::mutex m;
+    }
+
     // Exceptions in this subsystem are represented not by raw strings or the
     // standard exception hierarchy but by a dedicated interface. The rationale
     // is that detour-specific errors typically carry richer semantics than a
@@ -58,12 +72,11 @@ namespace iw4x
     class LIBIW4X_SYMEXPORT transaction_error : public exception
     {
     public:
-      transaction_error (const std::string &message);
-
-      virtual ~transaction_error () noexcept;
+      explicit
+      transaction_error (const std::string& message);
 
       const std::string &
-      message () const;
+      message () const noexcept;
 
       virtual void
       print (std::ostream &) const;
@@ -75,12 +88,139 @@ namespace iw4x
       std::string message_;
     };
 
-    //
-    //
+    class LIBIW4X_SYMEXPORT zydis_error : public exception
+    {
+    public:
+      explicit
+      zydis_error (const std::string &);
+
+      explicit
+      zydis_error (const std::string &, ZyanStatus status);
+
+      const std::string &
+      message () const noexcept;
+
+      ZyanStatus
+      status () const noexcept;
+
+      virtual void
+      print (std::ostream &) const override;
+
+      virtual const char *
+      what () const noexcept override;
+
+    private:
+      std::string message_;
+      ZyanStatus status_;
+    };
+
+    class LIBIW4X_SYMEXPORT interception_error : public exception
+    {
+    public:
+      explicit
+      interception_error (const std::string &message);
+
+      explicit
+      interception_error (const std::string &message, DWORD error_code);
+
+      const std::string &
+      message () const noexcept;
+
+      DWORD
+      error_code () const noexcept;
+
+      virtual void
+      print (std::ostream &) const override;
+
+      virtual const char *
+      what () const noexcept override;
+
+    private:
+      std::string message_;
+      DWORD error_code_;
+    };
+
+    class LIBIW4X_SYMEXPORT disassembler
+    {
+    public:
+      disassembler ();
+
+      // Decode instruction at address.
+      //
+      bool
+      decode (void *address, ZydisDecodedInstruction &instruction) const;
+
+      // Get instruction length at address.
+      //
+      std::size_t
+      length (void *address) const;
+
+      // Format instruction for display.
+      //
+      bool
+      format (const ZydisDecodedInstruction &instruction,
+              void *address,
+              char *buffer,
+              std::size_t buffer_size) const;
+
+    private:
+      ZydisDecoder decoder_;
+      ZydisFormatter formatter_;
+    };
+
     class LIBIW4X_SYMEXPORT transaction
     {
     public:
+      enum class state
+      {
+        preparing,
+        committed
+      };
+
       transaction ();
+
+      // Prepare a detour for the specified target function.
+      //
+      void
+      attach (void *target, void *hook, void **original = nullptr);
+
+      // Prepare removal of a detour for the specified target function.
+      //
+      void
+      detach (void *target);
+
+      // Atomically apply all prepared operations.
+      //
+      void
+      commit ();
+
+      // Rollback all operations in this transaction.
+      //
+      void
+      rollback ();
+
+      // Check if the transaction has pending operations.
+      //
+      bool
+      empty () const noexcept;
+
+      // Get the number of pending operations.
+      //
+      std::size_t
+      size () const noexcept;
+
+      // Clear all pending operations without applying them.
+      //
+      void
+      clear ();
+
+    private:
+      state state_;
+
+      // Individual action performed within the transaction
+      //
+      struct operation;
+      std::vector<operation> operations_;
     };
   }
 }

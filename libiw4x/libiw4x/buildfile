@@ -2,6 +2,7 @@ intf_libs = # Interface dependencies.
 impl_libs = # Implementation dependencies.
 
 import intf_libs += libquill%lib{quill}
+import intf_libs += libzydis%lib{zydis}
 
 lib{iw4x}: {hxx ixx txx cxx}{* -version -options} \
            {hxx            }{   version         } \
