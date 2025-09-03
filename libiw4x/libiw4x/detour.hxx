@@ -38,5 +38,41 @@ namespace iw4x
     //
     std::ostream&
     operator<< (std::ostream&, const exception&);
+
+    // transaction_error
+    //
+    // While `detour::exception` defines the abstract contract, there are cases
+    // where a full hierarchy of specialized exception types would be excessive.
+    // Many operations in this subsystem fail in ways that can be adequately
+    // summarized with a textual message. For such cases, we provide
+    // `transaction_error`, a concrete implementation that carries only a
+    // string.
+    //
+    // The design intention is pragmatic: when a transaction fails, the failure
+    // context is usually reducible to "what we tried to do" and "why it could
+    // not be done". A plain string is sufficient for this, and introducing a
+    // proliferation of subclasses would not improve diagnosability. Thus
+    // `transaction_error` serves as the general-purpose, message-bearing error
+    // type.
+    //
+    class LIBIW4X_SYMEXPORT transaction_error : public exception
+    {
+    public:
+      transaction_error (const std::string &message);
+
+      virtual ~transaction_error () noexcept;
+
+      const std::string &
+      message () const;
+
+      virtual void
+      print (std::ostream &) const;
+
+      virtual const char *
+      what () const noexcept;
+
+    private:
+      std::string message_;
+    };
   }
 }
