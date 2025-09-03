@@ -74,5 +74,13 @@ namespace iw4x
     private:
       std::string message_;
     };
+
+    //
+    //
+    class LIBIW4X_SYMEXPORT transaction
+    {
+    public:
+      transaction ();
+    };
   }
 }
