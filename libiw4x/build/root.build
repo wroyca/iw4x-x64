@@ -1,6 +1,6 @@
 cxx.internal.scope = current
 
-cxx.std = latest
+cxx.std = c++11
 
 using cxx
 
