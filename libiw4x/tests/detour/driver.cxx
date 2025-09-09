@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstdint>
 
 #include <libiw4x/detour.hxx>
 
@@ -22,7 +23,10 @@ main ()
         transaction txn (db);
         odb::transaction &t (txn ());
 
-        txn.attach ("test_param", 42);
+        uintptr_t a (0x000000);
+        uintptr_t b (0x000000);
+
+        txn.attach (a, b);
         t.commit ();
       }
       catch (const transaction_error &ex)

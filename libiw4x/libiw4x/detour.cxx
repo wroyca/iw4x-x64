@@ -135,4 +135,19 @@ namespace iw4x
       throw transaction_error (format ("unable to begin transaction: {}", e.what ()));
     }
   }
+
+  // operation
+  //
+
+  operation::
+  operation (transaction &txn, function<void ()> operation)
+    : txn_ (txn), operation_ (move (operation))
+  {
+  }
+
+  operation::
+  operation (transaction &txn, uintptr_t s, uintptr_t d)
+    : txn_ (txn)
+  {
+  }
 }
