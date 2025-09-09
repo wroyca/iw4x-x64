@@ -1,6 +1,9 @@
 intf_libs = # Interface dependencies.
 impl_libs = # Implementation dependencies.
 
+import intf_libs += libodb%lib{odb}
+import intf_libs += libodb-sqlite%lib{odb-sqlite}
+
 lib{iw4x}: {hxx ixx txx cxx}{* -version -options} \
            {hxx            }{   version         } \
            {def            }{*                  } \

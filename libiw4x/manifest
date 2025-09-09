@@ -14,3 +14,6 @@ builds: -32 ; 64-bit targets only
 builds: -clang ; clang is not supported
 depends: * build2 >= 0.17.0
 depends: * bpkg >= 0.17.0
+depends: * odb >= 2.5.0 ? ($config.libiw4x.develop)
+depends: libodb >= 2.5.0
+depends: libodb-sqlite >= 2.5.0
