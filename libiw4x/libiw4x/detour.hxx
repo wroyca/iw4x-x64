@@ -112,8 +112,8 @@ namespace iw4x
   public:
     database ();
 
-    template <typename Self>
-    auto operator() (this Self&& self) -> decltype(auto)
+    template <typename Self> decltype (auto)
+    operator() (this Self &&self)
     {
       if (!self.db_)
         throw database_error ("database not initialized");
@@ -130,7 +130,22 @@ namespace iw4x
   class LIBIW4X_SYMEXPORT transaction
   {
   public:
-    transaction ();
+    explicit
+    transaction (database &db);
+
+    // Access underlying ODB transaction
+    //
+    template <typename Self> decltype (auto)
+    operator() (this Self &&self)
+    {
+      if (!self.txn_)
+        throw transaction_error ("transaction not initialized");
+
+      return (*self.txn_);
+    }
+
+  private:
+    std::unique_ptr<odb::transaction> txn_;
   };
 
   // operation
@@ -138,6 +153,10 @@ namespace iw4x
   class LIBIW4X_SYMEXPORT operation
   {
   public:
-    operation ();
+    explicit
+    operation (transaction &txn);
+
+  private:
+    transaction &txn_;
   };
 }

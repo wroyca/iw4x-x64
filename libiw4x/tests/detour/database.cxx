@@ -14,22 +14,36 @@ main ()
   try
   {
     database db;
-
     try
     {
-      auto& d (db ());
+      odb::database &d (db ());
+      try
+      {
+        transaction txn (db);
+        odb::transaction &t (txn ());
+        operation op (txn);
+        t.commit ();
+      }
+      catch (const transaction_error &ex)
+      {
+        ex.print (cerr);
+        return 1;
+      }
+      catch (const operation_error &ex)
+      {
+        ex.print (cerr);
+        return 1;
+      }
     }
-
-    catch (const database_error& ex)
+    catch (const database_error &ex)
     {
       ex.print (cerr);
       return 1;
     }
   }
-
-  catch (const detour::exception& ex)
+  catch (const detour::exception &ex)
   {
-    ex.print(cerr);
+    ex.print (cerr);
     return 1;
   }
 }

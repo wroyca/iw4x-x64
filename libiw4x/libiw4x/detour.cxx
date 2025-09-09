@@ -120,17 +120,28 @@ namespace iw4x
   //
 
   transaction::
-  transaction ()
+  transaction (database& db)
   {
-    // ...
+    try
+    {
+      // Begin transaction on database following ODB manual section 3.5
+      //
+      txn_ = make_unique<odb::transaction> (
+        db ().begin ()
+      );
+    }
+    catch (const odb::exception& e)
+    {
+      throw transaction_error (format ("unable to begin transaction: {}", e.what ()));
+    }
   }
 
   // operation
   //
 
   operation::
-  operation ()
+  operation (transaction& txn)
+    : txn_ (txn)
   {
-    // ...
   }
 }
