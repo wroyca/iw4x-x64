@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 // Include Windows.h in a way that avoids the usual namespace pollution.
 //
 // In particular, we temporarily define WIN32_LEAN_AND_MEAN to exclude rarely
@@ -34,5 +36,11 @@ namespace iw4x
   {
     void
     attach_console ();
+
+    std::string
+    format_message (unsigned long code);
+
+    std::string
+    format_message ();
   }
 }
