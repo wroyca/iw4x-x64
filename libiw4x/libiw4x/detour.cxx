@@ -135,13 +135,4 @@ namespace iw4x
       throw transaction_error (format ("unable to begin transaction: {}", e.what ()));
     }
   }
-
-  // operation
-  //
-
-  operation::
-  operation (transaction& txn)
-    : txn_ (txn)
-  {
-  }
 }

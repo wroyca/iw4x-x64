@@ -21,7 +21,8 @@ main ()
       {
         transaction txn (db);
         odb::transaction &t (txn ());
-        operation op (txn);
+
+        txn.attach ("test_param", 42);
         t.commit ();
       }
       catch (const transaction_error &ex)

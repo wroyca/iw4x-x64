@@ -1,9 +1,11 @@
 #pragma once
 
 #include <exception>
+#include <memory>
 #include <ostream>
 #include <string>
-#include <memory>
+#include <utility>
+#include <vector>
 
 #include <odb/database.hxx>
 #include <odb/transaction.hxx>
@@ -105,6 +107,10 @@ namespace iw4x
     std::string message_;
   };
 
+  // forward declarations
+  //
+  class operation;
+
   // database
   //
   class LIBIW4X_SYMEXPORT database
@@ -144,8 +150,12 @@ namespace iw4x
       return (*self.txn_);
     }
 
+    template <typename... Args> void
+    attach (Args &&...args);
+
   private:
     std::unique_ptr<odb::transaction> txn_;
+    std::vector<operation> operations;
   };
 
   // operation
@@ -153,10 +163,34 @@ namespace iw4x
   class LIBIW4X_SYMEXPORT operation
   {
   public:
-    explicit
-    operation (transaction &txn);
+    template <typename... Args> explicit
+    operation (transaction &txn, Args &&...args);
 
   private:
     transaction &txn_;
   };
+}
+
+// inline
+//
+namespace iw4x
+{
+  // transaction
+  //
+
+  template <typename... Args> void transaction::
+  attach (Args &&...args)
+  {
+    operations.emplace_back (operation (*this, std::forward<Args> (args)...));
+  }
+
+  // operation
+  //
+
+  template <typename... Args> operation::
+  operation (transaction &txn, Args &&...args)
+    : txn_ (txn)
+  {
+    // ...
+  }
 }
