@@ -1,8 +1,6 @@
 intf_libs = # Interface dependencies.
 impl_libs = # Implementation dependencies.
 
-import intf_libs += libquill%lib{quill}
-
 lib{iw4x}: {hxx ixx txx cxx}{* -version -options} \
            {hxx            }{   version         } \
            {def            }{*                  } \
