@@ -3,6 +3,10 @@
 #include <exception>
 #include <ostream>
 #include <string>
+#include <memory>
+
+#include <odb/database.hxx>
+#include <odb/transaction.hxx>
 
 #include <libiw4x/export.hxx>
 
@@ -107,6 +111,18 @@ namespace iw4x
   {
   public:
     database ();
+
+    template <typename Self>
+    auto operator() (this Self&& self) -> decltype(auto)
+    {
+      if (!self.db_)
+        throw database_error ("database not initialized");
+
+      return (*self.db_);
+    }
+
+  private:
+    std::unique_ptr<odb::database> db_;
   };
 
   // transaction

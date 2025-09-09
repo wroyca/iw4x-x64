@@ -1,5 +1,8 @@
 #include <libiw4x/detour.hxx>
 
+#include <odb/sqlite/database.hxx>
+#include <odb/sqlite/exceptions.hxx>
+
 using namespace std;
 
 namespace iw4x
@@ -98,7 +101,19 @@ namespace iw4x
   database::
   database ()
   {
-    // ...
+    try
+    {
+      // Create in-memory SQLite database as shown in ODB manual section 18.2
+      //
+      db_ = make_unique<odb::sqlite::database> (
+        ":memory:",
+        SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE
+      );
+    }
+    catch (const odb::exception& e)
+    {
+      throw database_error (format ("unable to create database: {}", e.what ()));
+    }
   }
 
   // transaction
