@@ -41,6 +41,6 @@ namespace iw4x
     format_message (unsigned long code);
 
     std::string
-    format_message ();
+    get_last_error ();
   }
 }

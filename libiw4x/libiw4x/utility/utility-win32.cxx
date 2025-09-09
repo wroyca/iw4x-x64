@@ -147,7 +147,7 @@ namespace iw4x
     }
 
     string
-    format_message ()
+    get_last_error ()
     {
       return format_message (GetLastError ());
     }
