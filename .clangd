@@ -1,0 +1,10 @@
+---
+Index:
+  StandardLibrary: Yes
+Diagnostics:
+  ClangTidy:
+    FastCheckFilter: None
+  UnusedIncludes: None
+Completion:
+  AllScopes: true
+...
