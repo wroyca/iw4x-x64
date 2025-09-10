@@ -1,0 +1,15 @@
+# By default, bdep-init configures projects being initialized for development.
+#
+# https://build2.org/build2/doc/build2-build-system-manual.xhtml#proj-config
+
+if ($config.libiw4x.develop)
+{
+  switch $cxx.target.system
+  {
+    case 'mingw32'
+    {
+      config.cc.coptions += -g
+      config.cc.coptions += -gdwarf-5
+    }
+  }
+}

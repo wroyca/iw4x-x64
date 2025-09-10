@@ -17,12 +17,12 @@ namespace iw4x
     void
     attach_console ()
     {
-      // The subtlety here is that Windows has many ways to end up with
-      // stdout/stderr pointing *somewhere* (sometimes to an actual console,
+      // The subtlety here is that Windows has many ways to end up with stdout
+      // and stderr pointing *somewhere* (sometimes to an actual console,
       // sometimes to a pipe, sometimes to a completely invalid handle). We do
-      // not want to blithely attach to `CONOUT$` in cases where the existing
-      // handles are already valid and intentional, as this would silently
-      // discard the real output sink.
+      // not want to attach to `CONOUT$` in cases where the existing handles are
+      // already valid and intentional, as this would silently discard the real
+      // output sink.
       //
       // Instead, we first check `_fileno(stdout)` and `_fileno(stderr)`. The
       // MSVCRT sets these up at startup and will return `-2`
@@ -78,10 +78,11 @@ namespace iw4x
       // for stderr) so that any code using the raw FD API sees the same
       // handles.
       //
-      // Note: If this fails, there is not much we can do. We avoid throwing
+      // Note: failed that, there is not much we can do. We avoid throwing
       // exceptions, as this does not impact iw4x's core functionality and
-      // diagnostic output is not possible, since rebind is unavailable. This is
-      // a best-effort redirection; all errors are suppressed unconditionally.
+      // diagnostic output is not possible, since rebind is unavailable.
+      // This is a best-effort redirection; all errors are suppressed
+      // unconditionally.
       //
       bool stdout_rebound (false);
       bool stderr_rebound (false);
@@ -94,9 +95,9 @@ namespace iw4x
           _dup2 (_fileno (stderr), 2) != -1)
         stderr_rebound = true;
 
-      // Finally, if stream were rebound, realign iostream objects (`cout`,
-      // `cerr`, etc.) with the C FILE streams. Failed that, both could buffer
-      // independently and produce confusingly interleaved output.
+      // If stream were rebound, realign iostream objects (`cout`, `cerr`, etc.)
+      // with the C FILE streams. Failed that, both could buffer independently
+      // and produce confusingly interleaved output.
       //
       if (stdout_rebound && stderr_rebound)
         ios::sync_with_stdio ();
@@ -108,48 +109,44 @@ namespace iw4x
       struct d
       {
         void
-        operator() (char *p) const
+        operator() (char* p) const
         {
           LocalFree (p);
         }
       };
 
       // We rely on FormatMessage() to render human-readable diagnostics from
-      // Windows error codes. While the API is somewhat archaic, it is still the
-      // canonical Windows mechanism. That is, it allocates the buffer for
+      // Windows error codes. While the API is somewhat archaic, it is still
+      // the canonical Windows mechanism. That is, it allocates the buffer for
       // us (via LocalAlloc) when FORMAT_MESSAGE_ALLOCATE_BUFFER is specified.
       //
       // This allocation model is awkward: it forces us to pair with LocalFree
       // rather than standard C++ delete[], and so we wrap it in a custom
       // deleter (above) to manage ownership via unique_ptr.
       //
-      // Note that If FormatMessage() itself fails (e.g., unknown error code or
-      // no buffer could be allocated), then we fall back to a synthesized
-      // string that at least preserves the numeric error code for diagnostics
-      // rather than silently returning an empty string.
+      // Note that If FormatMessage() itself fails (e.g., unknown error code
+      // or no buffer could be allocated), then we fall back to a synthesized
+      // string that at least preserves the numeric error code for
+      // diagnostics.
       //
-      char *msg;
+      char* msg (nullptr);
       if (!FormatMessage (
             FORMAT_MESSAGE_ALLOCATE_BUFFER |
             FORMAT_MESSAGE_FROM_SYSTEM |
             FORMAT_MESSAGE_IGNORE_INSERTS |
             FORMAT_MESSAGE_MAX_WIDTH_MASK,
-            0,
+            nullptr,
             code,
             MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT),
-            (char *) &msg,
+            reinterpret_cast<char*> (&msg),
             0,
-            0))
+            nullptr))
+      {
         return "unknown error code " + to_string (code);
+      }
 
       unique_ptr<char, d> m (msg);
       return msg;
-    }
-
-    string
-    get_last_error ()
-    {
-      return format_message (GetLastError ());
     }
   }
 }

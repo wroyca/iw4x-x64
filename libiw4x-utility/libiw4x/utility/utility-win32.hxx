@@ -1,7 +1,5 @@
 #pragma once
 
-#include <string>
-
 // Include Windows.h in a way that avoids the usual namespace pollution.
 //
 // In particular, we temporarily define WIN32_LEAN_AND_MEAN to exclude rarely
@@ -30,17 +28,22 @@
 #  endif
 #endif
 
+#include <string>
+
+#include <libiw4x/utility/export.hxx>
+
 namespace iw4x
 {
   namespace utility
   {
-    void
+    // Attaches the current process to the console of its parent process.
+    //
+    LIBIW4X_UTILITY_SYMEXPORT void
     attach_console ();
 
-    std::string
+    // Formats a Windows error code into a human-readable string message.
+    //
+    LIBIW4X_UTILITY_SYMEXPORT std::string
     format_message (unsigned long code);
-
-    std::string
-    get_last_error ();
   }
 }

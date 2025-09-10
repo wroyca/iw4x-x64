@@ -1,14 +1,9 @@
 intf_libs = # Interface dependencies.
 impl_libs = # Implementation dependencies.
 
-import intf_libs += libiw4x-utility%lib{iw4x-utility}
-
-lib{iw4x}: {hxx ixx txx cxx}{* -version -options} \
-           {hxx            }{   version         } \
-           {def            }{*                  } \
-           $impl_libs $intf_libs
-
-lib{iw4x}: libul{iw4x}: {hxx ixx txx cxx}{utility/**} $impl_libs $intf_libs
+lib{iw4x-utility}: {hxx ixx txx cxx}{** -utility-win32 -version} \
+                   {hxx            }{                   version} \
+                   $impl_libs $intf_libs
 
 # The `version.hxx` header is generated from the `version.in` template during
 # the build. As libiw4x source is meant to be distributable (and not just
@@ -37,38 +32,48 @@ hxx{version}:
   clean = ($src_root != $out_root)
 }
 
+# IW4x core is inherently Windows-specific: it's a DLL and must be built with
+# either MinGW or MSVC. Some of our (to be) auxiliary tools, however, are
+# platform-agnostic.
+#
+lib{iw4x-utility}: {hxx cxx}{utility-win32}: \
+  include = ($cxx.target.class == 'windows')
+
 # Build options.
 #
 cxx.poptions =+ "-I$out_root" "-I$src_root"
 
-obja{*}: cxx.poptions += -DLIBIW4X_STATIC_BUILD
-objs{*}: cxx.poptions += -DLIBIW4X_SHARED_BUILD
+if ($config.libiw4x_utility.develop)
+  cxx.poptions =+ "-DLIBIW4X_UTILITY_DEVELOP"
+
+obja{*}: cxx.poptions += -DLIBIW4X_UTILITY_STATIC_BUILD
+objs{*}: cxx.poptions += -DLIBIW4X_UTILITY_SHARED_BUILD
 
 # Export options.
 #
-lib{iw4x}:
+lib{iw4x-utility}:
 {
   cxx.export.poptions = "-I$out_root" "-I$src_root"
   cxx.export.libs = $intf_libs
 }
 
-liba{iw4x}: cxx.export.poptions += -DLIBIW4X_STATIC
-libs{iw4x}: cxx.export.poptions += -DLIBIW4X_SHARED
+liba{iw4x-utility}: cxx.export.poptions += -DLIBIW4X_UTILITY_STATIC
+libs{iw4x-utility}: cxx.export.poptions += -DLIBIW4X_UTILITY_SHARED
 
 # For pre-releases use the complete version to make sure they cannot
 # be used in place of another pre-release or the final version. See
 # the version module for details on the version.* variable values.
 #
 if $version.pre_release
-  lib{iw4x}: bin.lib.version = "-$version.project_id"
+  lib{iw4x-utility}: bin.lib.version = "-$version.project_id"
 else
-  lib{iw4x}: bin.lib.version = "-$version.major.$version.minor"
+  lib{iw4x-utility}: bin.lib.version = "-$version.major.$version.minor"
 
-# Install into the libiw4x/ subdirectory of, say, /usr/include/
+# Install into the libiw4x/utility/ subdirectory of, say, /usr/include/
 # recreating subdirectories.
 #
 {hxx ixx txx}{*}:
 {
-  install         = include/libiw4x/
+  install         = include/libiw4x/utility/
   install.subdirs = true
 }

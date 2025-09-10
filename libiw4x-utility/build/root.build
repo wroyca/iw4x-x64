@@ -16,5 +16,5 @@ test.target = $cxx.target
 # Pre-defined semantics to distinguish between development and consumption
 # builds.
 #
-config [bool] config.libiw4x.develop ?= false
-source $src_root/build/config/libiw4x/develop.build
+config [bool] config.libiw4x_utility.develop ?= false
+source $src_root/build/config/libiw4x-utility/develop.build
