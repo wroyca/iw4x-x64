@@ -1,0 +1,43 @@
+intf_libs = # Interface dependencies.
+impl_libs = # Implementation dependencies.
+#import xxxx_libs += libhello%lib{hello}
+
+lib{iw4x}: {hxx ixx txx cxx}{** -version} hxx{version} $impl_libs $intf_libs
+
+hxx{version}: in{version} $src_root/manifest
+
+# Build options.
+#
+cxx.poptions =+ "-I$out_root" "-I$src_root"
+
+obja{*}: cxx.poptions += -DLIBIW4X_STATIC_BUILD
+objs{*}: cxx.poptions += -DLIBIW4X_SHARED_BUILD
+
+# Export options.
+#
+lib{iw4x}:
+{
+  cxx.export.poptions = "-I$out_root" "-I$src_root"
+  cxx.export.libs = $intf_libs
+}
+
+liba{iw4x}: cxx.export.poptions += -DLIBIW4X_STATIC
+libs{iw4x}: cxx.export.poptions += -DLIBIW4X_SHARED
+
+# For pre-releases use the complete version to make sure they cannot
+# be used in place of another pre-release or the final version. See
+# the version module for details on the version.* variable values.
+#
+if $version.pre_release
+  lib{iw4x}: bin.lib.version = "-$version.project_id"
+else
+  lib{iw4x}: bin.lib.version = "-$version.major.$version.minor"
+
+# Install into the libiw4x/ subdirectory of, say, /usr/include/
+# recreating subdirectories.
+#
+{hxx ixx txx}{*}:
+{
+  install         = include/libiw4x/
+  install.subdirs = true
+}

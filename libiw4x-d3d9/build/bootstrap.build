@@ -1,0 +1,7 @@
+project = libiw4x-d3d9
+
+using version
+using config
+using test
+using install
+using dist

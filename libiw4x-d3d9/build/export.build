@@ -1,0 +1,6 @@
+$out_root/
+{
+  include libiw4x/d3d9/
+}
+
+export $out_root/libiw4x/d3d9/$import.target
