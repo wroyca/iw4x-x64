@@ -1,0 +1,6 @@
+LIBRARY	D3D9.DLL
+
+EXPORTS
+Direct3DCreate9	= create
+D3DPERF_EndEvent = end_event
+D3DPERF_BeginEvent = begin_event

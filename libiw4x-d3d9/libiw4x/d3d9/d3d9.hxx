@@ -1,7 +1,8 @@
 #pragma once
 
-#include <iosfwd>
-#include <string>
+#include <d3d9.h>
+
+#include <libiw4x/utility/utility-win32.hxx>
 
 #include <libiw4x/d3d9/export.hxx>
 
@@ -9,10 +10,16 @@ namespace iw4x
 {
   namespace d3d9
   {
-    // Print a greeting for the specified name into the specified
-    // stream. Throw std::invalid_argument if the name is empty.
-    //
-    LIBIW4X_D3D9_SYMEXPORT void
-    say_hello (std::ostream&, const std::string& name);
+    extern "C"
+    {
+      IDirect3D9* WINAPI
+      create (unsigned int sdk_version);
+
+      int WINAPI
+      begin_event (unsigned long color, const wchar_t* name);
+
+      int WINAPI
+      end_event ();
+    }
   }
 }

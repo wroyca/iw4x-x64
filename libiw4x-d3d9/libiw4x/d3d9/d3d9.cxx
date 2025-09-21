@@ -1,21 +1,30 @@
 #include <libiw4x/d3d9/d3d9.hxx>
 
-#include <ostream>
-#include <stdexcept>
-
 using namespace std;
 
 namespace iw4x
 {
   namespace d3d9
   {
-    void
-    say_hello (ostream& o, const string& n)
+    extern "C"
     {
-      if (n.empty ())
-        throw invalid_argument ("empty name");
+      IDirect3D9* WINAPI
+      create (unsigned int sdk_version)
+      {
+        // ...
+      }
 
-      o << "Hello, " << n << '!' << endl;
+      int WINAPI
+      begin_event (unsigned long color, const wchar_t* name)
+      {
+        // ...
+      }
+
+      int WINAPI
+      end_event ()
+      {
+        // ...
+      }
     }
   }
 }
