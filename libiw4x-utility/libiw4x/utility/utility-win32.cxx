@@ -1,5 +1,6 @@
 #include <libiw4x/utility/utility-win32.hxx>
 
+#include <filesystem>
 #include <iostream>
 #include <memory>
 
@@ -9,6 +10,7 @@ extern "C"
 }
 
 using namespace std;
+using namespace std::filesystem;
 
 namespace iw4x
 {
@@ -146,6 +148,64 @@ namespace iw4x
 
       unique_ptr<char, d> m (msg);
       return msg;
+    }
+
+    path
+    get_system_directory ()
+    {
+      // Initial fixed-size buffer. MAX_PATH is sufficient for common cases but
+      // may be exceeded if Windows is configured with longer system paths.
+      //
+      char system_directory_b [MAX_PATH], *system_directory (system_directory_b);
+
+      // First attempt with fixed buffer.
+      //
+      unsigned long n (GetSystemDirectory (system_directory_b,
+                                           sizeof (system_directory_b)));
+      {
+        if (n == 0)
+        {
+          cerr << "error: unable to obtain system directory\n"
+               << format_message (GetLastError ());
+
+          return path ();
+        }
+      }
+
+      // Return value greater than the buffer size indicates truncation.
+      // The API specifies the required buffer length in characters. Retry
+      // with heap allocation.
+      //
+      if (n > sizeof (system_directory_b))
+      {
+        unique_ptr<char[]> dyn (make_unique<char[]> (n));
+        system_directory = dyn.get ();
+
+        DWORD r (GetSystemDirectory (system_directory, n));
+        {
+          if (r == 0)
+          {
+            cerr << "error: unable to obtain system directory (retry)\n"
+                 << format_message (GetLastError ()) << endl;
+
+            return path ();
+          }
+        }
+
+        // A second size increase indicates the path changed concurrently
+        // and cannot be reconciled safely.
+        //
+        if (r > n)
+        {
+          cerr << "error: system directory path changed concurrently";
+
+          return path ();
+        }
+      }
+
+      // Construct result path from stack or heap buffer.
+      //
+      return path (system_directory);
     }
   }
 }

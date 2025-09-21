@@ -1,5 +1,6 @@
 #pragma once
 
+
 // Include Windows.h in a way that avoids the usual namespace pollution.
 //
 // In particular, we temporarily define WIN32_LEAN_AND_MEAN to exclude rarely
@@ -28,6 +29,7 @@
 #  endif
 #endif
 
+#include <filesystem>
 #include <string>
 
 #include <libiw4x/utility/export.hxx>
@@ -45,5 +47,10 @@ namespace iw4x
     //
     LIBIW4X_UTILITY_SYMEXPORT std::string
     format_message (unsigned long code);
+
+    // Retrieves the Windows system directory path.
+    //
+    LIBIW4X_UTILITY_SYMEXPORT std::filesystem::path
+    get_system_directory ();
   }
 }
