@@ -1,8 +1,8 @@
 intf_libs = # Interface dependencies.
 impl_libs = # Implementation dependencies.
 
-import intf_libs += libimgui-platform-win32%lib{imgui-platform-win32}
-import intf_libs += libimgui-render-dx9%lib{imgui-render-dx9}
+import intf_libs += libimgui-platform-win32-docking%lib{imgui-platform-win32-docking}
+import intf_libs += libimgui-render-dx9-docking%lib{imgui-render-dx9-docking}
 
 lib{iw4x}: {hxx ixx txx cxx}{* -version} \
            {hxx            }{   version} \

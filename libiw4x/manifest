@@ -14,5 +14,5 @@ builds: -32 ; 64-bit targets only
 builds: -clang ; clang is not supported
 depends: * build2 >= 0.17.0
 depends: * bpkg >= 0.17.0
-depends: libimgui-platform-win32 == 1.92.3
-depends: libimgui-render-dx9 == 1.92.3
+depends: libimgui-platform-win32-docking == 1.92.3
+depends: libimgui-render-dx9-docking == 1.92.3
