@@ -7,4 +7,4 @@ location: https://pkg.cppget.org/1/stable
 
 :
 role: prerequisite
-location: https://github.com/wroyca/imgui.git#mingw
+location: https://github.com/build2-packaging/imgui.git

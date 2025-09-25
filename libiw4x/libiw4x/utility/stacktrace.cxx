@@ -11,7 +11,7 @@
 #include <cstdlib>
 #include <signal.h>
 
-#include <libiw4x/utility/utility-win32.hxx>
+#include <libiw4x/utility/windows.hxx>
 
 using namespace std;
 
