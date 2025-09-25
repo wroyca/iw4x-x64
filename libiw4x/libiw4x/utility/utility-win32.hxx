@@ -1,9 +1,5 @@
 #pragma once
 
-#include <memory>
-#include <ostream>
-#include <string>
-
 // Include Windows.h in a way that avoids the usual namespace pollution.
 //
 // In particular, we temporarily define WIN32_LEAN_AND_MEAN to exclude rarely
@@ -32,14 +28,15 @@
 #  endif
 #endif
 
+#include <string>
+
+#include <libiw4x/export.hxx>
+
 namespace iw4x
 {
   namespace utility
   {
-    // Attaches the calling process to the console of the specified process
-    // as a client application.
-    //
-    // chromium/src/base/process/launch_win.cc
+    // Attaches the current process to the console of its parent process.
     //
     void
     attach_console ();

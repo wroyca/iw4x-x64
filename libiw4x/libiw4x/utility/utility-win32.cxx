@@ -1,9 +1,12 @@
 #include <libiw4x/utility/utility-win32.hxx>
 
-#include <ios>
 #include <iostream>
+#include <memory>
 
-#include <io.h>
+extern "C"
+{
+  #include <io.h>
+}
 
 using namespace std;
 
@@ -14,12 +17,12 @@ namespace iw4x
     void
     attach_console ()
     {
-      // The subtlety here is that Windows has many ways to end up with
-      // stdout/stderr pointing *somewhere* (sometimes to an actual console,
+      // The subtlety here is that Windows has many ways to end up with stdout
+      // and stderr pointing *somewhere* (sometimes to an actual console,
       // sometimes to a pipe, sometimes to a completely invalid handle). We do
-      // not want to blithely attach to `CONOUT$` in cases where the existing
-      // handles are already valid and intentional, as this would silently
-      // discard the real output sink.
+      // not want to attach to `CONOUT$` in cases where the existing handles are
+      // already valid and intentional, as this would silently discard the real
+      // output sink.
       //
       // Instead, we first check `_fileno(stdout)` and `_fileno(stderr)`. The
       // MSVCRT sets these up at startup and will return `-2`
@@ -41,10 +44,7 @@ namespace iw4x
         intptr_t stderr_handle (_get_osfhandle (_fileno (stderr)));
 
         if (stdout_handle >= 0 || stderr_handle >= 0)
-        {
-          cerr << "warning: console is already attached" << endl;
-          return;
-        }
+          return; // console is already attached
       }
 
       // At this point, we've confirmed that neither standard stream is in use,
@@ -52,13 +52,13 @@ namespace iw4x
       //
       if (AttachConsole (ATTACH_PARENT_PROCESS) == 0)
       {
-        unsigned int result (GetLastError ());
+        unsigned int e (GetLastError ());
 
         // `ERROR_ACCESS_DENIED` here usually means "you are already attached".
         // In that case, doing anything else would be redundant at best and
         // risky at worst, so we bail out.
         //
-        if (result == ERROR_ACCESS_DENIED)
+        if (e == ERROR_ACCESS_DENIED)
           return;
 
         // If we get ERROR_GEN_FAILURE, then the parent process's console is
@@ -66,7 +66,7 @@ namespace iw4x
         // vanished. Creating a new console in this case would only produce an
         // orphan window with no practical audience.
         //
-        if (result == ERROR_GEN_FAILURE)
+        if (e == ERROR_GEN_FAILURE)
           return;
       }
 
@@ -75,24 +75,29 @@ namespace iw4x
       // for stderr) so that any code using the raw FD API sees the same
       // handles.
       //
-      // Note: If this fails, there is not much we can do. We avoid throwing
+      // Note: failed that, there is not much we can do. We avoid throwing
       // exceptions, as this does not impact iw4x's core functionality and
-      // diagnostic output is not possible, since rebind is unavailable. This is
-      // a best-effort redirection; all errors are suppressed unconditionally.
+      // diagnostic output is not possible, since rebind is unavailable.
+      // This is a best-effort redirection; all errors are suppressed
+      // unconditionally.
       //
-      {
-        if (freopen ("CONOUT$", "w", stdout) != nullptr)
-          _dup2 (_fileno (stdout), 1);
+      bool stdout_rebound (false);
+      bool stderr_rebound (false);
 
-        if (freopen ("CONOUT$", "w", stderr) != nullptr)
-          _dup2 (_fileno (stderr), 2);
-      }
+      if (freopen ("CONOUT$", "w", stdout) != nullptr &&
+          _dup2 (_fileno (stdout), 1) != -1)
+        stdout_rebound = true;
 
-      // Finally, we must realign iostream objects (`cout`, `cerr`, etc.) with
-      // the C FILE streams. Failed that, both could buffer independently and
-      // produce confusingly interleaved output.
+      if (freopen ("CONOUT$", "w", stderr) != nullptr &&
+          _dup2 (_fileno (stderr), 2) != -1)
+        stderr_rebound = true;
+
+      // If stream were rebound, realign iostream objects (`cout`, `cerr`, etc.)
+      // with the C FILE streams. Failed that, both could buffer independently
+      // and produce confusingly interleaved output.
       //
-      std::ios::sync_with_stdio ();
+      if (stdout_rebound && stderr_rebound)
+        ios::sync_with_stdio ();
     }
   }
 }
