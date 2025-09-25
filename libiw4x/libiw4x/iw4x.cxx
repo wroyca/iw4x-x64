@@ -4,10 +4,8 @@
 #include <cstddef>
 #include <iostream>
 
-
 #include <libiw4x/console-win32.hxx>
 #include <libiw4x/imgui.hxx>
-
 
 using namespace std;
 using namespace iw4x::utility;
@@ -21,8 +19,6 @@ namespace iw4x
     {
       if (fdwReason != DLL_PROCESS_ATTACH)
         return TRUE;
-
-      attach_console ();
 
       // DllMain executes while the process loader lock is held.
       //
@@ -38,26 +34,6 @@ namespace iw4x
       // The patch itself is just a manual memory write. This is by design: the
       // less we do in a DLL entry point, the better. Introducing dynamic
       // behavior here would only enlarge the set of things that can go wrong.
-      //
-      // Note also that our executable's startup routine is in actually Windows
-      // CRT startup which relies on a pair of well-known routines to initialize
-      // it internal state: namely, __security_init_cookie (which sets up the
-      // stack cookie for buffer overrun protection) and __scrt_common_main_seh
-      // (which performs the actual C runtime startup).
-      //
-      // These two routines are part of the compiler-provided runtime and are
-      // treated as opaque internals of the toolchain. For this reason, we
-      // deliberately avoid creating delegate types or symbolic wrappers for
-      // them, unlike the rest of our system-level patch points. They are called
-      // directly via hardcoded addresses with explicit reinterpret_casts, as
-      // these are transitional control transfers into non-user code, not
-      // application-level function references.
-      //
-      // This distinction is intentional: we do not expect readers or
-      // maintainers to interact with or override these symbols; they represent
-      // fixed CRT behavior. That is, we avoid symbolic abstraction to signal
-      // that these calls are special-case bootstrap mechanisms outside the
-      // application's purview.
       //
       uintptr_t target (0x140358EBC);
       uintptr_t source (reinterpret_cast<decltype (source)> (+[] ()
@@ -113,25 +89,41 @@ namespace iw4x
           FlushInstructionCache (GetCurrentProcess (), p, s);
         });
 
-        console console;
-        console.register_command ("iw4x", [&console] ()
-        {
-          console.execute_command ("downloadplaylist");
-          console.execute_command ("xblive_privatematch 1");
-          console.execute_command ("onlinegame 0");
-          console.execute_command ("xblive_hostingprivateparty 1");
-          console.execute_command ("xblive_privatepartyclient 1");
-        });
+        // Subsystem initialization
+        //
+        // At this stage we bring up the subsystems that are always present in
+        // IW4x. You may notice there is no indirection, registration machinery,
+        // or other "flexibility enablers" here.
+        //
+        // This is deliberate.
+        //
+        // Subsystem are required unconditionally, their implementations are not
+        // expected to vary, and their lifetime is naturally tied to that of the
+        // application lifetime. In such cases, introducing factories or dynamic
+        // allocation would be without substance.
+        //
+        // In other words, we resist the temptation to build a "general
+        // solution" where a straightforward construction suffices. Flexibility
+        // can always be added later, but simplicity once lost is rarely
+        // recovered.
+        //
+        console console_{};
+        imgui imgui_{};
 
-        imgui imgui;
-
-        // After the cookie has been seeded, the standard CRT entry point would
-        // transfer control to `__scrt_common_main_seh()`.
+        // Once the security cookie has been initialized and our detours
+        // installed, control must be handed back to the CRT. The designated
+        // entry point for this purpose is `__scrt_common_main_seh()`.
+        //
+        // Note that it is the mechanism by which the MSVC runtime transitions
+        // from raw process state into a valid C/C++ execution environment.
+        // Skipping or bypassing it would leave the process in an indeterminate
+        // state, with undefined behavior on both normal execution paths and
+        // during shutdown.
         //
         return reinterpret_cast<int (*) ()> (0x140358D48) ();
       }));
 
-      // Encode a 64-bit absolute jump:
+      // Encode our 64-bit absolute jump:
       //
       // - FF 25 00000000   ; JMP QWORD PTR [RIP + 0]
       // - <64-bit address> ; Absolute destination in little-endian
@@ -151,25 +143,27 @@ namespace iw4x
       // The resulting sequence is 14 bytes total: six bytes for the opcode
       // and displacement, followed by the eight-byte absolute address.
       //
-      array<std::byte, 14> sequence
+      array<unsigned char, 14> sequence
       {
         {
-          static_cast<std::byte> (0xFF),
-          static_cast<std::byte> (0x25),
-          static_cast<std::byte> (0x00),
-          static_cast<std::byte> (0x00),
-          static_cast<std::byte> (0x00),
-          static_cast<std::byte> (0x00),
-          static_cast<std::byte> ((source)       & 0xFF),
-          static_cast<std::byte> ((source >> 8)  & 0xFF),
-          static_cast<std::byte> ((source >> 16) & 0xFF),
-          static_cast<std::byte> ((source >> 24) & 0xFF),
-          static_cast<std::byte> ((source >> 32) & 0xFF),
-          static_cast<std::byte> ((source >> 40) & 0xFF),
-          static_cast<std::byte> ((source >> 48) & 0xFF),
-          static_cast<std::byte> ((source >> 56) & 0xFF)
+          static_cast<unsigned char> (0xFF),
+          static_cast<unsigned char> (0x25),
+          static_cast<unsigned char> (0x00),
+          static_cast<unsigned char> (0x00),
+          static_cast<unsigned char> (0x00),
+          static_cast<unsigned char> (0x00),
+          static_cast<unsigned char> ((source)       & 0xFF),
+          static_cast<unsigned char> ((source >> 8)  & 0xFF),
+          static_cast<unsigned char> ((source >> 16) & 0xFF),
+          static_cast<unsigned char> ((source >> 24) & 0xFF),
+          static_cast<unsigned char> ((source >> 32) & 0xFF),
+          static_cast<unsigned char> ((source >> 40) & 0xFF),
+          static_cast<unsigned char> ((source >> 48) & 0xFF),
+          static_cast<unsigned char> ((source >> 56) & 0xFF)
         }
       };
+
+      attach_console ();
 
       DWORD o (0);
 
@@ -184,7 +178,7 @@ namespace iw4x
         return FALSE;
       }
 
-      if (memcpy (reinterpret_cast<void *> (target),
+      if (memcpy (reinterpret_cast<void*> (target),
                   sequence.data (),
                   sequence.size ()) == nullptr)
       {
