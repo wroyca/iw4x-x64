@@ -107,8 +107,19 @@ namespace iw4x
         // can always be added later, but simplicity once lost is rarely
         // recovered.
         //
-        console console_{};
-        imgui imgui_{};
+        console console{};
+        imgui imgui{};
+
+        // TODO: move to console
+        //
+        console.register_command ("iw4x", [&console] ()
+        {
+          console.execute_command ("downloadplaylist");
+          console.execute_command ("xblive_privatematch 1");
+          console.execute_command ("onlinegame 0");
+          console.execute_command ("xblive_hostingprivateparty 1");
+          console.execute_command ("xblive_privatepartyclient 1");
+        });
 
         // Once the security cookie has been initialized and our detours
         // installed, control must be handed back to the CRT. The designated
