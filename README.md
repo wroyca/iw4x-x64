@@ -1,6 +1,14 @@
 # IW4x (Microsoft Store x64 Research)
 
-![Alt text](.github/screenshot.png?raw=true)
+![IW4x Screenshot](.github/screenshot.png?raw=true)
+
+IW4x is an exploration of the Microsoft Store edition of *Modern Warfare 2*, ported to the x64 environment. The repository is not intended as a ready-to-play distribution, but as a research and development platform.
+
+## Scope and Audience
+
+Two categories of readers are expected. The first are testers, who interact with IW4x as a package to evaluate its current development state. The second are contributors, who work directly on the codebase. The workflows for each differ, and this README addresses both in turn.
+
+Note that end-users looking for stable releases will not find them here and should instead consult the pre-built packages (soon to be) available on the [GitHub releases page](https://github.com/wroyca/iw4x-x64/releases).
 
 ## Getting Started
 
