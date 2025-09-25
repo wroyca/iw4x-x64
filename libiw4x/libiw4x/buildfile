@@ -3,7 +3,6 @@ impl_libs = # Implementation dependencies.
 
 import intf_libs += libimgui-platform-win32%lib{imgui-platform-win32}
 import intf_libs += libimgui-render-dx9%lib{imgui-render-dx9}
-import intf_libs += libboost-stacktrace%lib{boost_stacktrace}
 
 lib{iw4x}: {hxx ixx txx cxx}{* -version} \
            {hxx            }{   version} \
