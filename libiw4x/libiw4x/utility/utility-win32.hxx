@@ -40,5 +40,10 @@ namespace iw4x
     //
     void
     attach_console ();
+
+    // Formats a Windows error code into a human-readable string message.
+    //
+    std::string
+    format_message (unsigned long code);
   }
 }
