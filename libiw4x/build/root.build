@@ -1,21 +1,3 @@
-using cxx.guess
-
-# Historically, it has been surprisingly common for developers, especially those
-# on Windows, to accidentally invoke the wrong toolchain when building this
-# project. The most frequent culprit has been starting from the MSVC "x86"
-# developer prompt instead of the intended "x64" one. This silently causes all
-# C++ compilation to target x86, which in our case is a build mode we neither
-# support nor test.
-#
-if ($cxx.target.cpu != 'x86_64')
-  fail "unsupported target cpu: $cxx.target.cpu"
-
-using in
-
-define cli: file
-
-cli{*}: extension = cli
-
 cxx.internal.scope = current
 
 cxx.std = latest
@@ -35,4 +17,3 @@ test.target = $cxx.target
 # builds.
 #
 config [bool] config.libiw4x.develop ?= false
-develop = $config.libiw4x.develop # shorthand
