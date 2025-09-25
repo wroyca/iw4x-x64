@@ -3,7 +3,7 @@
 #include <d3d9.h>
 #pragma comment(lib, "d3d9.lib")
 
-#include <libiw4x/utility/windows.hxx>
+#include <libiw4x/utility/utility-win32.hxx>
 
 #include <libiw4x/export.hxx>
 

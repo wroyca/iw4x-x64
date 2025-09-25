@@ -1,4 +1,4 @@
-#include <libiw4x/utility/windows.hxx>
+#include <libiw4x/utility/utility-win32.hxx>
 
 #include <ios>
 #include <iostream>
