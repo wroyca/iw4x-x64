@@ -38,4 +38,6 @@ namespace iw4x
   using std::to_string;
   using std::unique_ptr;
   using std::vector;
+
+  using cstring = char*;
 }

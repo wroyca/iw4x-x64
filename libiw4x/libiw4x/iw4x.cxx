@@ -14,4 +14,3 @@ namespace iw4x
     }
   }
 }
-

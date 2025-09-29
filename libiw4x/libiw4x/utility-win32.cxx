@@ -117,7 +117,7 @@ namespace iw4x
     // string that at least preserves the numeric error code for
     // diagnostics.
     //
-    char* message (nullptr);
+    cstring message (nullptr);
     if (!FormatMessage (FORMAT_MESSAGE_ALLOCATE_BUFFER |
                         FORMAT_MESSAGE_FROM_SYSTEM |
                         FORMAT_MESSAGE_IGNORE_INSERTS |
@@ -125,7 +125,7 @@ namespace iw4x
                         nullptr,
                         code,
                         MAKELANGID (LANG_NEUTRAL, SUBLANG_DEFAULT),
-                        reinterpret_cast<char*> (&message),
+                        reinterpret_cast<cstring> (&message),
                         0,
                         nullptr))
     {
