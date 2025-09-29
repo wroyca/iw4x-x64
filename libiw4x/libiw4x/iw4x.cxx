@@ -1,14 +1,8 @@
 #include <libiw4x/iw4x.hxx>
 
-#include <array>
-#include <cstddef>
-#include <iostream>
-
-#include <libiw4x/console-win32.hxx>
+#include <libiw4x/renderer.hxx>
 #include <libiw4x/imgui.hxx>
-
-using namespace std;
-using namespace iw4x::utility;
+#include <libiw4x/console-win32.hxx>
 
 namespace iw4x
 {
@@ -45,8 +39,27 @@ namespace iw4x
         //
         reinterpret_cast<void (*) ()> (0x1403598CC) ();
 
-        // Perform IW4x-specific initialization before transferring control
-        // to the original C runtime startup. See DllMain() for context.
+        // Under normal circumstances, a DLL is unloaded via FreeLibrary once
+        // its reference count reaches zero. This is acceptable for auxiliary
+        // libraries but unsuitable for modules like ours, which embed deeply
+        // into the host process.
+        //
+        // To prevent FreeLibrary call on our module, whether accidental or
+        // deliberate, we informs the Windows loader that our module is a
+        // permanent part of the process.
+        //
+        HMODULE m;
+        if (!GetModuleHandleEx (GET_MODULE_HANDLE_EX_FLAG_PIN |
+                                  GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+                                reinterpret_cast<LPCTSTR> (DllMain),
+                                &m))
+        {
+          cerr << "error: unable to mark module as permanent" << endl;
+
+          terminate ();
+        }
+
+        // Quick Patch
         //
         ([] (auto&& _)
         {
@@ -107,25 +120,15 @@ namespace iw4x
         // can always be added later, but simplicity once lost is rarely
         // recovered.
         //
-        console console{};
-        imgui imgui{};
-
-        // TODO: move to console
-        //
-        console.register_command ("iw4x", [&console] ()
-        {
-          console.execute_command ("downloadplaylist");
-          console.execute_command ("xblive_privatematch 1");
-          console.execute_command ("onlinegame 0");
-          console.execute_command ("xblive_hostingprivateparty 1");
-          console.execute_command ("xblive_privatepartyclient 1");
-        });
+        renderer renderer;
+        imgui imgui (renderer);
+        console console;
 
         // Once the security cookie has been initialized and our detours
         // installed, control must be handed back to the CRT. The designated
         // entry point for this purpose is `__scrt_common_main_seh()`.
         //
-        // Note that it is the mechanism by which the MSVC runtime transitions
+        // Note that it's the mechanism by which the MSVC runtime transitions
         // from raw process state into a valid C/C++ execution environment.
         // Skipping or bypassing it would leave the process in an indeterminate
         // state, with undefined behavior on both normal execution paths and

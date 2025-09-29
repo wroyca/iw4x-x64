@@ -60,6 +60,16 @@ namespace iw4x
       SetWindowLongPtr (input_,
                         GWLP_USERDATA,
                         reinterpret_cast<LONG_PTR> (this));
+
+      register_command ("iw4x",
+                        [&] ()
+      {
+        execute_command ("downloadplaylist");
+        execute_command ("xblive_privatematch 1");
+        execute_command ("onlinegame 0");
+        execute_command ("xblive_hostingprivateparty 1");
+        execute_command ("xblive_privatepartyclient 1");
+      });
     }
     catch (const exception &e)
     {
