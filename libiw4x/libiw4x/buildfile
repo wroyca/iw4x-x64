@@ -1,10 +1,41 @@
 intf_libs = # Interface dependencies.
 impl_libs = # Implementation dependencies.
-#import xxxx_libs += libhello%lib{hello}
 
-lib{iw4x}: {hxx ixx txx cxx}{** -version} hxx{version} $impl_libs $intf_libs
+import intf_libs += libboost-core%lib{boost_core}
+import intf_libs += libboost-signals2%lib{boost_signals2}
+import intf_libs += libimgui-render-dx9-docking%lib{imgui-render-dx9-docking}
+import intf_libs += libimgui-platform-win32-docking%lib{imgui-platform-win32-docking}
 
+lib{iw4x}: {hxx ixx txx cxx}{** -version} \
+           {hxx            }{    version} \
+           $impl_libs $intf_libs
+
+# The `version.hxx` header is generated from the `version.in` template during
+# the build. As libiw4x source is meant to be distributable (and not just
+# buildable from VCS), we also include this generated header in the source
+# distribution tarball.
+#
+# The reasoning here is simple: when someone builds from a release archive, they
+# should not need to regenerate `version.hxx` (which would require `b` to re-run
+# the template processing logic). Instead, they can pick up the one we already
+# generated at release time. This guarantees that the distributed code compiles
+# "as shipped" without any auxiliary generation steps.
+#
+# There is also a subtler, defensive reason: by marking this header as `dist =
+# true` we make sure that when building from an unpacked distribution we never
+# accidentally pick up a *different* `version.hxx` from some prior installation
+# in the system include path.
+#
+# Finally, we mark it `clean = ($src_root != $out_root)` so that `b clean`
+# inside the source tree does not delete it. That way, the post-clean state of a
+# source tree matches exactly what we would ship in a distribution archive.
+#
 hxx{version}: in{version} $src_root/manifest
+hxx{version}:
+{
+  dist = true
+  clean = ($src_root != $out_root)
+}
 
 # Build options.
 #

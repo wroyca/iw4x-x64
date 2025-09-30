@@ -11,4 +11,7 @@ email: wroy@proton.me
 #build-error-email: wroy@proton.me
 depends: * build2 >= 0.17.0
 depends: * bpkg >= 0.17.0
-#depends: libhello ^1.0.0
+depends: libboost-core >= 1.87.0
+depends: libboost-signals2 >= 1.87.0
+depends: libimgui-render-dx9-docking == 1.92.3
+depends: libimgui-platform-win32-docking == 1.92.3
