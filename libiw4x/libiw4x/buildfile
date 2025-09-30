@@ -54,21 +54,3 @@ lib{iw4x}:
 
 liba{iw4x}: cxx.export.poptions += -DLIBIW4X_STATIC
 libs{iw4x}: cxx.export.poptions += -DLIBIW4X_SHARED
-
-# For pre-releases use the complete version to make sure they cannot
-# be used in place of another pre-release or the final version. See
-# the version module for details on the version.* variable values.
-#
-if $version.pre_release
-  lib{iw4x}: bin.lib.version = "-$version.project_id"
-else
-  lib{iw4x}: bin.lib.version = "-$version.major.$version.minor"
-
-# Install into the libiw4x/ subdirectory of, say, /usr/include/
-# recreating subdirectories.
-#
-{hxx ixx txx}{*}:
-{
-  install         = include/libiw4x/
-  install.subdirs = true
-}
