@@ -48,3 +48,12 @@ lib{iw4x}:
 
 liba{iw4x}: cxx.export.poptions += -DLIBIW4X_STATIC
 libs{iw4x}: cxx.export.poptions += -DLIBIW4X_SHARED
+
+# Install into the libiw4x/ subdirectory of, say, /usr/include/
+# recreating subdirectories.
+#
+{hxx ixx txx}{*}:
+{
+  install         = include/libiw4x/
+  install.subdirs = true
+}
