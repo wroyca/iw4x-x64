@@ -15,8 +15,6 @@ namespace iw4x
 {
   class LIBIW4X_SYMEXPORT renderer
   {
-    // Signal type for frame events
-    //
     using signal = boost::signals2::signal<void (IDirect3DDevice9*)>;
 
   public:
@@ -38,7 +36,8 @@ namespace iw4x
 
     // Friend function for DirectX hook
     //
-    friend void notify_frame_render (IDirect3DDevice9* device);
+    friend void
+    notify_frame_render (IDirect3DDevice9* device);
   };
 
   // Global function to dispatch frame rendering events
