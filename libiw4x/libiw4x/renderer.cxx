@@ -21,7 +21,7 @@ namespace iw4x
                                                   D3DPRESENT_PARAMETERS *,
                                                   IDirect3DDevice9 **);
 
-    renderer* r (nullptr);
+    renderer* instance (nullptr);
     endscene_t endscene (nullptr);
     create_device_t create_device (nullptr);
   }
@@ -244,7 +244,7 @@ namespace iw4x
     // Set this instance as the current renderer so that it may
     // participate in frame notifications.
     //
-    r = this;
+    instance = this;
   }
 
   renderer::signal &
@@ -258,11 +258,11 @@ namespace iw4x
   {
     assert (device);
 
+    // Fire the signal to notify all connected slots
+    //
     try
     {
-      // Fire the signal to notify all connected slots
-      //
-      r->frame_signal (device);
+      instance->frame_signal (device);
     }
     catch (const exception &e)
     {
