@@ -12,16 +12,17 @@ namespace iw4x
 {
   namespace
   {
-    using endscene_t      = HRESULT (APIENTRY *) (IDirect3DDevice9 *);
-    using create_device_t = HRESULT (APIENTRY *) (IDirect3D9 *,
-                                                  UINT,
-                                                  D3DDEVTYPE,
-                                                  HWND,
-                                                  DWORD,
-                                                  D3DPRESENT_PARAMETERS *,
-                                                  IDirect3DDevice9 **);
-
     renderer* instance (nullptr);
+
+    using endscene_t      = HRESULT (APIENTRY*) (IDirect3DDevice9*);
+    using create_device_t = HRESULT (APIENTRY*) (IDirect3D9*,
+                                                 UINT,
+                                                 D3DDEVTYPE,
+                                                 HWND,
+                                                 DWORD,
+                                                 D3DPRESENT_PARAMETERS*,
+                                                 IDirect3DDevice9**);
+
     endscene_t endscene (nullptr);
     create_device_t create_device (nullptr);
   }
