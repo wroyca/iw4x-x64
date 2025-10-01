@@ -55,7 +55,7 @@ namespace iw4x
         {
           cerr << "error: unable to mark module as permanent" << endl;
 
-          terminate ();
+          exit (1);
         }
 
         // Quick Patch
