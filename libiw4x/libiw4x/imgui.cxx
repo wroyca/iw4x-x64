@@ -51,13 +51,13 @@ namespace iw4x
         IDirect3DSwapChain9* swap_chain;
         hr = device->GetSwapChain (0, &swap_chain);
         if (FAILED (hr))
-          throw runtime_error ("unable to get DirectX swap chain");
+          throw runtime_error ("unable to retrieve DirectX swap chain");
 
         D3DPRESENT_PARAMETERS pp;
         hr = swap_chain->GetPresentParameters (&pp);
         swap_chain->Release ();
         if (FAILED (hr))
-          throw runtime_error ("unable to get presentation parameters");
+          throw runtime_error ("unable to retrieve presentation parameters");
 
         HWND hwnd (pp.hDeviceWindow);
         if (hwnd == nullptr)
