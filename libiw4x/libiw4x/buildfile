@@ -16,7 +16,9 @@ lib{iw4x}: {hxx ixx txx cxx}{** -version} \
 # to look for libiw4x.dll explicitly. If build2 were allowed to "correct" the
 # name, the import would fail at runtime.
 #
-lib{iw4x}: bin.lib.prefix = "lib"
+# FIXME: https://github.com/build2/build2/issues/486
+#
+# lib{iw4x}: bin.lib.prefix = "lib"
 
 # The `version.hxx` header is generated from the `version.in` template during
 # the build. As libiw4x source is meant to be distributable (and not just
