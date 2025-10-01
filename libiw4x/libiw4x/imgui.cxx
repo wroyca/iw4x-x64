@@ -132,11 +132,6 @@ namespace iw4x
     ImGui::NewFrame ();
 
     {
-      // The demo window is kept as a standing diagnostic. It proves the
-      // integration remains functional and provides a baseline for UI
-      // interaction. This is less about showcasing ImGui and more about having
-      // a known-good surface to test against.
-      //
       static bool show_demo_window (true);
       ImGui::ShowDemoWindow (&show_demo_window);
     }
