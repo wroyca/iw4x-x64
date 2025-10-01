@@ -19,6 +19,8 @@ extern "C"
 
 namespace iw4x
 {
+  using cstring = char*;
+
   using std::array;
   using std::call_once;
   using std::cerr;
@@ -39,6 +41,4 @@ namespace iw4x
   using std::to_string;
   using std::unique_ptr;
   using std::vector;
-
-  using cstring = char*;
 }
