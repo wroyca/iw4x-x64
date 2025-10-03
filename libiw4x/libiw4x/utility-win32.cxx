@@ -32,10 +32,7 @@ namespace iw4x
       intptr_t stderr_handle (_get_osfhandle (_fileno (stderr)));
 
       if (stdout_handle >= 0 || stderr_handle >= 0)
-      {
-        cerr << "warning: console is already attached" << endl;
         return;
-      }
     }
 
     // At this point, we've confirmed that neither standard stream is in use,
