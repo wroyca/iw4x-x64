@@ -8,9 +8,9 @@ namespace iw4x
   extern "C"
   {
     BOOL WINAPI
-    DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+    DllMain (HINSTANCE instance, DWORD reason, LPVOID reserved)
     {
-      if (fdwReason != DLL_PROCESS_ATTACH)
+      if (reason != DLL_PROCESS_ATTACH)
         return TRUE;
 
       // DllMain executes while the process loader lock is held.

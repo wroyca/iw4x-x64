@@ -9,6 +9,6 @@ namespace iw4x
   extern "C"
   {
     BOOL WINAPI
-    DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
+    DllMain (HINSTANCE instance, DWORD reason, LPVOID reserved);
   }
 }
