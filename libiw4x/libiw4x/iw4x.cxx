@@ -54,7 +54,27 @@ namespace iw4x
                                 &m))
         {
           cerr << "error: unable to mark module as permanent" << endl;
+          exit (1);
+        }
 
+        // We want the process to operate relative to the DLL's location rather
+        // than whatever directory the OS happened to launch it from.
+        //
+        if (char p [MAX_PATH]; GetModuleFileName (m, p, MAX_PATH))
+        {
+          string s (p);
+          size_t i (s.rfind ('\\'));
+
+          if (i == string::npos ||
+              !SetCurrentDirectory (s.substr (0, i).c_str ()))
+          {
+            cerr << "error: unable to set current directory" << endl;
+            exit (1);
+          }
+        }
+        else
+        {
+          cerr << "error: unable to retrieve module location" << endl;
           exit (1);
         }
 
