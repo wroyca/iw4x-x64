@@ -49,13 +49,13 @@ namespace iw4x
 
     // Action handler.
     //
-    ([this] (const string& mn, const string& in, const vector<string>& cmd)
+    ([this] (const string& menu_name, const string& item_name, const vector<string>& commands)
     {
-      menuDef_t* m (find_menu (mn));
-      itemDef_s* i (find_item (m, in));
+      menuDef_t* menu (find_menu (menu_name));
+      itemDef_s* item (find_item (menu, item_name));
 
-      MenuEventHandlerSet* hs (make_handler_set (cmd));
-      i->action = hs;
+      MenuEventHandlerSet* handler_set (make_handler_set (commands));
+      item->action = handler_set;
     },
 
     // Expression handler.
@@ -64,29 +64,29 @@ namespace iw4x
     // property, effectively enabling the menu item unconditionally. We don't
     // handle or allow any other expression modifications at this time.
     //
-    [this] (const string& mn, const string& in)
+    [this] (const string& menu_name, const string& item_name)
     {
-      menuDef_t* m (find_menu (mn));
-      itemDef_s* i (find_item (m, in));
+      menuDef_t* menu (find_menu (menu_name));
+      itemDef_s* item (find_item (menu, item_name));
 
-      i->disabledExp = nullptr;
+      item->disabledExp = nullptr;
     });
   }
 
   menuDef_t*
-  menu_handlers::find_menu (const string& n)
+  menu_handlers::find_menu (const string& name)
   {
-    XAssetHeader h (DB_FindXAssetHeader (ASSET_TYPE_MENU, n.c_str()));
+    XAssetHeader header (DB_FindXAssetHeader (ASSET_TYPE_MENU, name.c_str()));
 
-    return h.menu;
+    return header.menu;
   }
 
   itemDef_s*
-  menu_handlers::find_item (menuDef_t* m, const string& name)
+  menu_handlers::find_item (menuDef_t* menu, const string& name)
   {
-    for (int i (0); i < m->itemCount; ++i)
+    for (int i (0); i < menu->itemCount; ++i)
     {
-      itemDef_s* item (m->items [i]);
+      itemDef_s* item (menu->items [i]);
 
       // Note that we have no guarantee that the engine will always match item
       // count with the actual items array size.
@@ -99,33 +99,33 @@ namespace iw4x
   }
 
   MenuEventHandlerSet*
-  menu_handlers::make_handler_set (const vector<string>& cmds)
+  menu_handlers::make_handler_set (const vector<string>& commands)
   {
-    MenuEventHandlerSet* hs (new MenuEventHandlerSet ());
-    hs->eventHandlerCount = static_cast<int> (cmds.size ());
-    hs->eventHandlers = new MenuEventHandler*[cmds.size ()];
+    MenuEventHandlerSet* handler_set (new MenuEventHandlerSet ());
+    handler_set->eventHandlerCount = static_cast<int> (commands.size ());
+    handler_set->eventHandlers = new MenuEventHandler*[commands.size ()];
 
     // Index is needed for array assignment.
     //
-    for (size_t i (0); const auto& cmd : cmds)
+    for (size_t i (0); const auto& command : commands)
     {
-      MenuEventHandler* h (make_handler (cmd, event_type::ev_unconditional));
-      hs->eventHandlers [i++] = h;
+      MenuEventHandler* handler (make_handler (command, event_type::ev_unconditional));
+      handler_set->eventHandlers [i++] = handler;
     }
 
-    return hs;
+    return handler_set;
   }
 
   MenuEventHandler*
-  menu_handlers::make_handler (const string& cmd, event_type t)
+  menu_handlers::make_handler (const string& command, event_type type)
   {
-    MenuEventHandler* h (new MenuEventHandler ());
-    h->eventType = static_cast<char> (t);
+    MenuEventHandler* handler (new MenuEventHandler ());
+    handler->eventType = static_cast<char> (type);
 
-    switch (t)
+    switch (type)
     {
       case event_type::ev_unconditional:
-        h->eventData.unconditionalScript = _strdup (cmd.c_str ());
+        handler->eventData.unconditionalScript = _strdup (command.c_str ());
         break;
       case event_type::ev_if:
       case event_type::ev_else:
@@ -133,10 +133,10 @@ namespace iw4x
       case event_type::ev_set_local_var_int:
       case event_type::ev_set_local_var_float:
       case event_type::ev_set_local_var_string:
-        h->eventData.unconditionalScript = _strdup (cmd.c_str ());
+        handler->eventData.unconditionalScript = _strdup (command.c_str ());
         break;
     }
 
-    return h;
+    return handler;
   }
 }

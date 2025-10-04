@@ -34,9 +34,9 @@ namespace iw4x
     };
 
     MenuEventHandlerSet*
-    make_handler_set (const vector<string>& cmds);
+    make_handler_set (const vector<string>& commands);
 
     MenuEventHandler*
-    make_handler (const string& cmd, event_type t);
+    make_handler (const string& command, event_type type);
   };
 }
