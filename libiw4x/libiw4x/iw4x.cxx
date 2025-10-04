@@ -2,6 +2,7 @@
 
 #include <libiw4x/renderer.hxx>
 #include <libiw4x/imgui.hxx>
+#include <libiw4x/component/menu-handlers.hxx>
 
 namespace iw4x
 {
@@ -78,6 +79,30 @@ namespace iw4x
           exit (1);
         }
 
+        // Unprotect binary
+        //
+        MODULEINFO mi;
+        if (GetModuleInformation (GetCurrentProcess (),
+                                  GetModuleHandle (nullptr),
+                                  &mi,
+                                  sizeof (mi)))
+        {
+          DWORD o (0);
+          if (!VirtualProtect (mi.lpBaseOfDll,
+                               mi.SizeOfImage,
+                               PAGE_EXECUTE_READWRITE,
+                               &o))
+          {
+            cerr << "error: unable to change memory protection" << endl;
+            exit (1);
+          }
+        }
+        else
+        {
+          cerr << "error: unable to retrieve module information" << endl;
+          exit (1);
+        }
+
         // Quick Patch
         //
         ([] (auto&& _)
@@ -141,6 +166,15 @@ namespace iw4x
         //
         renderer renderer;
         imgui imgui (renderer);
+
+        // TODO: Write scheduler
+        //
+        CreateThread (nullptr, 0, [] (LPVOID) -> DWORD
+        {
+          Sleep (5000);
+          menu_handlers handlers;
+          return 0;
+        }, nullptr, 0, nullptr);
 
         // Once the security cookie has been initialized and our detours
         // installed, control must be handed back to the CRT. The designated

@@ -13,18 +13,22 @@
 #  ifndef NOMINMAX
 #    define NOMINMAX
 #    include <windows.h>
+#    include <psapi.h>
 #    undef NOMINMAX
 #  else
 #    include <windows.h>
+#    include <psapi.h>
 #  endif
 #  undef WIN32_LEAN_AND_MEAN
 #else
 #  ifndef NOMINMAX
 #    define NOMINMAX
 #    include <windows.h>
+#    include <psapi.h>
 #    undef NOMINMAX
 #  else
 #    include <windows.h>
+#    include <psapi.h>
 #  endif
 #endif
 
