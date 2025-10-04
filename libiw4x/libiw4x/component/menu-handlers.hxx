@@ -21,5 +21,22 @@ namespace iw4x
 
     itemDef_s*
     find_item (menuDef_t*, const string& name);
+
+    enum class event_type
+    {
+      ev_unconditional       = 0,
+      ev_if                  = 1,
+      ev_else                = 2,
+      ev_set_local_var_bool  = 3,
+      ev_set_local_var_int   = 4,
+      ev_set_local_var_float = 5,
+      ev_set_local_var_string = 6
+    };
+
+    MenuEventHandlerSet*
+    make_handler_set (const vector<string>& cmds);
+
+    MenuEventHandler*
+    make_handler (const string& cmd, event_type t);
   };
 }
