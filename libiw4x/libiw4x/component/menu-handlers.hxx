@@ -1,7 +1,6 @@
 #pragma once
 
 #include <libiw4x/database.hxx>
-#include <libiw4x/symbols.hxx>
 
 #include <libiw4x/utility-win32.hxx>
 
