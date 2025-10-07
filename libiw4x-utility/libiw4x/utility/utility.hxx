@@ -5,7 +5,7 @@
 
 #include <libiw4x/utility/export.hxx>
 
-namespace iw4x_utility
+namespace iw4x::utility
 {
   // Print a greeting for the specified name into the specified
   // stream. Throw std::invalid_argument if the name is empty.

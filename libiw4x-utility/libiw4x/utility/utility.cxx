@@ -1,13 +1,14 @@
-#include <libiw4x/utility/iw4x-utility.hxx>
+#include <libiw4x/utility/utility.hxx>
 
 #include <ostream>
 #include <stdexcept>
 
 using namespace std;
 
-namespace iw4x_utility
+namespace iw4x::utility
 {
-  void say_hello (ostream& o, const string& n)
+  void
+  say_hello (ostream& o, const string& n)
   {
     if (n.empty ())
       throw invalid_argument ("empty name");
