@@ -1,9 +1,5 @@
-: basics
-:
-$* 'World' >'Hello, World!'
-
-: missing-name
+: missing-path
 :
 $* 2>>EOE != 0
-error: missing name
+error: missing path
 EOE
