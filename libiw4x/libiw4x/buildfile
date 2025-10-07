@@ -1,6 +1,7 @@
 intf_libs = # Interface dependencies.
 impl_libs = # Implementation dependencies.
 
+import intf_libs += libiw4x-utility%lib{iw4x-utility}
 import intf_libs += libboost-core%lib{boost_core}
 import intf_libs += libboost-signals2%lib{boost_signals2}
 import intf_libs += libimgui-render-dx9-docking%lib{imgui-render-dx9-docking}

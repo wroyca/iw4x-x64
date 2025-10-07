@@ -32,7 +32,8 @@
 #  endif
 #endif
 
-#include <libiw4x/types.hxx>
+#include <libiw4x/utility/types.hxx>
+
 #include <libiw4x/export.hxx>
 
 namespace iw4x
