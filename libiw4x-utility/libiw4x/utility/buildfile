@@ -1,9 +1,11 @@
 intf_libs = # Interface dependencies.
 impl_libs = # Implementation dependencies.
 
-lib{iw4x-utility}: {hxx ixx txx cxx}{** -version} \
-                   {hxx            }{    version} \
-                   $impl_libs $intf_libs
+lib{iw4x-utility}: {hxx ixx txx cxx}{** -version -utility-win32} \
+                   {hxx            }{    version               } \
+                   $impl_libs $intf_lib
+
+lib{iw4x-utility}: {hxx cxx}{utility-win32}: include = $windows
 
 hxx{version}: in{version} $src_root/manifest
 

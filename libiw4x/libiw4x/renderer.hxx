@@ -2,7 +2,7 @@
 
 #include <boost/signals2.hpp>
 
-#include <libiw4x/utility-win32.hxx>
+#include <libiw4x/utility/utility-win32.hxx>
 
 #include <libiw4x/export.hxx>
 

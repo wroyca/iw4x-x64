@@ -10,7 +10,7 @@
 #include <imgui/backends/imgui_impl_dx9.h>
 #include <imgui/backends/imgui_impl_win32.h>
 
-#include <libiw4x/utility-win32.hxx>
+#include <libiw4x/utility/utility-win32.hxx>
 
 // Forward declare the ImGui Win32 message handler. See imgui_impl_win32.h for
 // context.

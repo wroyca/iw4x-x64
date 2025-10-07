@@ -34,17 +34,17 @@
 
 #include <libiw4x/utility/types.hxx>
 
-#include <libiw4x/export.hxx>
+#include <libiw4x/utility/export.hxx>
 
 namespace iw4x
 {
   // Attaches the current process to the console of its parent process.
   //
-  void
+  LIBIW4X_UTILITY_SYMEXPORT void
   attach_console ();
 
   // Formats a Windows error code into a human-readable string message.
   //
-  string
+  LIBIW4X_UTILITY_SYMEXPORT string
   format_message (unsigned long code);
 }
