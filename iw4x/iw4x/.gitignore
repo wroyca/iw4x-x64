@@ -1,0 +1,7 @@
+iw4x
+*.test
+
+# Testscript output directory (can be symlink).
+#
+test-iw4x
+test-*.test

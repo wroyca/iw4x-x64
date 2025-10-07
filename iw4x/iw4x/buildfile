@@ -1,0 +1,24 @@
+libs =
+#import libs += libhello%lib{hello}
+
+./: exe{iw4x}: libue{iw4x}: {hxx ixx txx cxx}{** -**.test...} $libs
+exe{iw4x}: testscript
+
+# Unit tests.
+#
+exe{*.test}:
+{
+  test = true
+  install = false
+}
+
+for t: cxx{**.test...}
+{
+  d = $directory($t)
+  n = $name($t)...
+
+  ./: $d/exe{$n}: $t $d/{hxx ixx txx}{+$n} $d/testscript{+$n}
+  $d/exe{$n}: libue{iw4x}: bin.whole = false
+}
+
+cxx.poptions =+ "-I$out_root" "-I$src_root"
