@@ -1,4 +1,6 @@
 libs =
+import libs += libimgui-platform-glfw-docking%lib{imgui-platform-glfw-docking}
+import libs += libimgui-render-opengl3-docking%lib{imgui-render-opengl3-docking}
 
 ./: exe{iw4x}: libue{iw4x}: {hxx ixx txx cxx}{** -**.test...} $libs
     exe{iw4x}: testscript

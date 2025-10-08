@@ -10,3 +10,5 @@ email: wroy@proton.me
 #build-error-email: wroy@proton.me
 depends: * build2 >= 0.18.0-
 depends: * bpkg >= 0.18.0-
+depends: libimgui-platform-glfw-docking >= 1.92.3
+depends: libimgui-render-opengl3-docking >= 1.92.3
