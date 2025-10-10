@@ -67,9 +67,33 @@ namespace iw4x
 {
   namespace
   {
+    struct point
+    {
+      double x, y, w, h;
+
+      point (int x, int y, int w, int h)
+        : x (static_cast<double> (x)),
+          y (static_cast<double> (y)),
+          w (static_cast<double> (w)),
+          h (static_cast<double> (h))
+      {
+      }
+
+      point (double x, double y, double w, double h)
+        : x (x),
+          y (y),
+          w (w),
+          h (h)
+      {
+      }
+    };
+
     struct texture
     {
       GLuint texture;
+
+      int width;
+      int height;
 
       operator
       ImTextureRef () const
@@ -78,7 +102,7 @@ namespace iw4x
       }
     };
 
-    optional <texture>
+    texture
     create_texture (const auto& image)
     {
       struct deleter
@@ -122,7 +146,7 @@ namespace iw4x
                     GL_UNSIGNED_BYTE,
                     stbi.get ());
 
-      return texture {t};
+      return texture {t, w, h};
     }
 
     void
@@ -172,6 +196,21 @@ namespace iw4x
                       ImGuiWindowFlags_NoMove |
                       ImGuiWindowFlags_NoScrollbar |
                       ImGuiWindowFlags_NoScrollWithMouse);
+
+        ImDrawList* draw_list (ImGui::GetWindowDrawList ());
+
+        // Banner
+        //
+        {
+          static auto t (create_texture (banner));
+
+          point p {(1280 - t.width) / 2, 100, t.width, t.height};
+
+          draw_list->AddImage (t,
+                               ImVec2 (p.x, p.y),
+                               ImVec2 (p.x + p.w, p.y + p.h));
+        }
+
         ImGui::End ();
         ImGui::Render ();
         ImGui::ImplOpenGL3RenderDrawData (ImGui::GetDrawData ());
