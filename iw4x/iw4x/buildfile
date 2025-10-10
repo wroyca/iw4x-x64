@@ -3,6 +3,7 @@ import! xxd = xxd%exe{xxd}
 libs =
 import libs += libimgui-platform-glfw-docking%lib{imgui-platform-glfw-docking}
 import libs += libimgui-render-opengl3-docking%lib{imgui-render-opengl3-docking}
+import libs += stb_image%lib{stb_image}
 
 ./: exe{iw4x}: libue{iw4x}: {hxx ixx txx cxx}{** -banner -**.test...} \
                             {hxx cxx        }{    banner            } \

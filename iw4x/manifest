@@ -13,3 +13,4 @@ depends: * bpkg >= 0.18.0-
 depends: * xxd >= 8.2.3075
 depends: libimgui-platform-glfw-docking >= 1.92.3
 depends: libimgui-render-opengl3-docking >= 1.92.3
+depends: stb_image

@@ -1,10 +1,20 @@
 #include <iostream>
+#include <memory>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
 #include <GLFW/glfw3.h>
+
+#include <iw4x/banner.hxx>
+
+#ifndef GL_CLAMP_TO_EDGE
+#define GL_CLAMP_TO_EDGE 0x812F
+#endif
 
 using namespace std;
 
@@ -57,6 +67,64 @@ namespace iw4x
 {
   namespace
   {
+    struct texture
+    {
+      GLuint texture;
+
+      operator
+      ImTextureRef () const
+      {
+        return static_cast<ImTextureID> (texture);
+      }
+    };
+
+    optional <texture>
+    create_texture (const auto& image)
+    {
+      struct deleter
+      {
+        void
+        operator() (unsigned char* p) const
+        {
+          if (p)
+            stbi_image_free (p);
+        }
+      };
+
+      int w (0), h (0);
+      unique_ptr<unsigned char, deleter> stbi (
+        stbi_load_from_memory (image.data (),
+                               static_cast<int> (image.size ()),
+                               &w,
+                               &h,
+                               nullptr,
+                               4));
+
+      if (!stbi)
+        throw nullopt;
+
+      GLuint t {0};
+      glGenTextures (1, &t);
+      glBindTexture (GL_TEXTURE_2D, t);
+
+      glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+      glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+      glTexImage2D (GL_TEXTURE_2D,
+                    0,
+                    GL_RGBA,
+                    w,
+                    h,
+                    0,
+                    GL_RGBA,
+                    GL_UNSIGNED_BYTE,
+                    stbi.get ());
+
+      return texture {t};
+    }
+
     void
     renderer ()
     {
