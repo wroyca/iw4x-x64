@@ -4,8 +4,48 @@ libs =
 import libs += libimgui-platform-glfw-docking%lib{imgui-platform-glfw-docking}
 import libs += libimgui-render-opengl3-docking%lib{imgui-render-opengl3-docking}
 
-./: exe{iw4x}: libue{iw4x}: {hxx ixx txx cxx}{** -**.test...} $libs
-    exe{iw4x}: testscript
+./: exe{iw4x}: libue{iw4x}: {hxx ixx txx cxx}{** -banner -**.test...} \
+                            {hxx cxx        }{    banner            } \
+                            $libs
+
+exe{iw4x}: testscript
+
+<{hxx cxx}{banner}>: file{iw4x.png} $xxd
+{{
+  diag xxd ($<[0])
+
+  i = $path($<[0]) # Input.
+  h = $path($>[0]) # Output header.
+  s = $path($>[1]) # Output source.
+  n = banner       # Array name.
+
+  # Get the position of the last byte (in hex).
+  #
+  $xxd -s -1 -l 1 $i | cut -d':' -f1 | set pos
+
+  if ($empty($pos))
+  {
+    exit "unable to extract input size from xxd output"
+  }
+
+  # Write header and source.
+  #
+  echo "#pragma once"                                                     >$h
+  echo ""                                                                >>$h
+  echo "#include <array>"                                                >>$h
+  echo ""                                                                >>$h
+  echo "inline constexpr std::array<unsigned char, 0x$pos + 1> $n = {{"  >>$h
+  echo "#include <iw4x/banner.hxx>"                                       >$s
+  $xxd -i <$i                                                            >>$h
+  echo '}};'                                                             >>$h
+}}
+
+{hxx cxx}{banner}:
+{
+  dist = true
+  clean = ($src_root != $out_root)
+  backlink = overwrite
+}
 
 # Unit tests.
 #
