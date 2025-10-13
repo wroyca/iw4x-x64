@@ -89,7 +89,16 @@ namespace iw4x
           exit (1);
         }
 
-        // Unprotect binary
+#ifdef LIBIW4X_UNPROTECT
+        // Relax the binary's memory protection to permit writes to code or data
+        // segments that are otherwise read-only.
+        //
+        // Note that this is strictly a debugging aid, that is, it bypasses
+        // normal memory safety guarantees and effectively disables DEP for the
+        // module. Under no circumstance should it be enabled in production
+        // builds or distributed binaries. Its presence is conditional on
+        // LIBIW4X_UNPROTECT to make the intent explicit and to avoid accidental
+        // inclusion.
         //
         MODULEINFO mi;
         if (GetModuleInformation (GetCurrentProcess (),
@@ -97,11 +106,10 @@ namespace iw4x
                                   &mi,
                                   sizeof (mi)))
         {
-          DWORD o (0);
-          if (!VirtualProtect (mi.lpBaseOfDll,
-                               mi.SizeOfImage,
-                               PAGE_EXECUTE_READWRITE,
-                               &o))
+          if (DWORD o (0); !VirtualProtect (mi.lpBaseOfDll,
+                                            mi.SizeOfImage,
+                                            PAGE_EXECUTE_READWRITE,
+                                            &o))
           {
             cerr << "error: unable to change memory protection" << endl;
             exit (1);
@@ -112,6 +120,7 @@ namespace iw4x
           cerr << "error: unable to retrieve module information" << endl;
           exit (1);
         }
+#endif
 
         // Quick Patch
         //
