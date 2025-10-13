@@ -58,8 +58,18 @@ namespace iw4x
           exit (1);
         }
 
-        // We want the process to operate relative to the DLL's location rather
-        // than whatever directory the OS happened to launch it from.
+        // By default, the process inherits its working directory from whatever
+        // environment or launcher invoked it, which may vary across setups and
+        // lead to unpredictable relative path resolution.
+        //
+        // The strategy here is to explicitly realign the working directory to
+        // the DLL's own location. That is, we effectively makes all relative
+        // file operations resolve against the module's directory when the
+        // process is hosted or started indirectly.
+        //
+        // Note also that failure to resolve or change the directory is treated
+        // as fatal, since continuing under an indeterminate working path would
+        // likely lead to cascading file I/O errors later on.
         //
         if (char p [MAX_PATH]; GetModuleFileName (m, p, MAX_PATH))
         {
