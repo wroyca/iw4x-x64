@@ -25,17 +25,10 @@ namespace iw4x
       // patch the executable's startup routine so that our setup runs later on
       // IW4's main thread, outside the constraints imposed by the loader lock.
       //
-      // The patch itself is just a manual memory write. This is by design: the
-      // less we do in a DLL entry point, the better. Introducing dynamic
-      // behavior here would only enlarge the set of things that can go wrong.
-      //
       uintptr_t target (0x140358EBC);
       uintptr_t source (reinterpret_cast<decltype (source)> (+[] ()
       {
-        // The CRT startup sequence normally begins by seeding its own internal
-        // security cookie. This is the value checked by /GS instrumentation to
-        // detect stack corruption. We must call `__security_init_cookie()`
-        // ourselves here to preserve the compiler's expected invariants.
+        // __security_init_cookie
         //
         reinterpret_cast<void (*) ()> (0x1403598CC) ();
 
@@ -195,15 +188,7 @@ namespace iw4x
           return 0;
         }, nullptr, 0, nullptr);
 
-        // Once the security cookie has been initialized and our detours
-        // installed, control must be handed back to the CRT. The designated
-        // entry point for this purpose is `__scrt_common_main_seh()`.
-        //
-        // Note that it's the mechanism by which the MSVC runtime transitions
-        // from raw process state into a valid C/C++ execution environment.
-        // Skipping or bypassing it would leave the process in an indeterminate
-        // state, with undefined behavior on both normal execution paths and
-        // during shutdown.
+        // __scrt_common_main_seh
         //
         return reinterpret_cast<int (*) ()> (0x140358D48) ();
       }));
