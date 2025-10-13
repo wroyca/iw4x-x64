@@ -1,8 +1,13 @@
 #include <libiw4x/iw4x.hxx>
 
+#include <iostream>
+
 #include <libiw4x/renderer.hxx>
 #include <libiw4x/imgui.hxx>
 #include <libiw4x/component/menu-handlers.hxx>
+
+using namespace std;
+using namespace iw4x::utility;
 
 namespace iw4x
 {

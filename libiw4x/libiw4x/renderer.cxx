@@ -13,6 +13,7 @@
 #include <libiw4x/utility/utility-win32.hxx>
 
 using namespace std;
+using namespace iw4x::utility;
 
 namespace iw4x
 {

@@ -1,5 +1,10 @@
 #include <libiw4x/imgui.hxx>
 
+#include <mutex>
+#include <sstream>
+#include <iostream>
+
+
 #include <d3d9.h>
 #ifdef _MSC_VER
 #  pragma comment(lib, "d3d9.lib")
@@ -20,12 +25,13 @@ ImGui_ImplWin32_WndProcHandler (HWND hWnd,
                                 WPARAM wParam,
                                 LPARAM lParam);
 
+using namespace std;
+using namespace iw4x::utility;
+
 namespace iw4x
 {
   namespace
   {
-    once_flag imgui_init;
-
     WNDPROC original_wnd_proc_ (nullptr);
   }
 
@@ -38,7 +44,7 @@ namespace iw4x
       // and there is no point in doing it twice if the first frame never
       // arrives.
       //
-      call_once (imgui_init, [device] ()
+      static once_flag imgui_init; call_once (imgui_init, [device] ()
       {
         HRESULT hr;
 
