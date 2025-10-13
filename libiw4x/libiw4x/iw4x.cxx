@@ -208,25 +208,16 @@ namespace iw4x
         return reinterpret_cast<int (*) ()> (0x140358D48) ();
       }));
 
-      // Encode our 64-bit absolute jump:
+      // Build a 64-bit absolute jump.
       //
-      // - FF 25 00000000   ; JMP QWORD PTR [RIP + 0]
-      // - <64-bit address> ; Absolute destination in little-endian
+      // x86-64 has no single-instruction form that takes a 64-bit immediate.
+      // The canonical solution is an indirect, RIP-relative jump followed by
+      // the eight-byte destination in little-endian form.
       //
-      // On x86-64, the `jmp` instruction does not provide an immediate
-      // absolute form. Instead, the canonical way to transfer control to a
-      // 64-bit address is via an indirect jump through memory. The form
-      // `FF /4` encodes `jmp r/m64`, and when paired with a RIP-relative
-      // addressing mode, it allows embedding the destination address as a
-      // literal directly after the instruction.
-      //
-      // With a displacement of zero, the effective address becomes
-      // "RIP + 0", that is, the address immediately following the
-      // instruction. The processor fetches the 64-bit value stored there and
-      // uses it as the jump target.
-      //
-      // The resulting sequence is 14 bytes total: six bytes for the opcode
-      // and displacement, followed by the eight-byte absolute address.
+      // With a zero displacement the memory operand refers to the eight bytes
+      // immediately after the six-byte opcode. The processor loads that value
+      // and transfers control to it. The total sequence is therefore 14 bytes:
+      // six for the opcode and displacement, eight for the address.
       //
       array<unsigned char, 14> sequence
       {
