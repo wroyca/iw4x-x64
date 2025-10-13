@@ -32,19 +32,22 @@
 #  endif
 #endif
 
-#include <libiw4x/utility/types.hxx>
+#include <string>
 
 #include <libiw4x/utility/export.hxx>
 
 namespace iw4x
 {
-  // Attaches the current process to the console of its parent process.
-  //
-  LIBIW4X_UTILITY_SYMEXPORT void
-  attach_console ();
+  namespace utility
+  {
+    // Attaches the current process to the console of its parent process.
+    //
+    LIBIW4X_UTILITY_SYMEXPORT void
+    attach_console ();
 
-  // Formats a Windows error code into a human-readable string message.
-  //
-  LIBIW4X_UTILITY_SYMEXPORT string
-  format_message (unsigned long code);
+    // Formats a Windows error code into a human-readable string message.
+    //
+    LIBIW4X_UTILITY_SYMEXPORT std::string
+    format_message (unsigned long code);
+  }
 }

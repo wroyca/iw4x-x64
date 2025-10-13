@@ -5,11 +5,14 @@
 
 #include <libiw4x/utility/export.hxx>
 
-namespace iw4x::utility
+namespace iw4x
 {
-  // Print a greeting for the specified name into the specified
-  // stream. Throw std::invalid_argument if the name is empty.
-  //
-  LIBIW4X_UTILITY_SYMEXPORT void
-  say_hello (std::ostream&, const std::string& name);
+  namespace utility
+  {
+    // Print a greeting for the specified name into the specified
+    // stream. Throw std::invalid_argument if the name is empty.
+    //
+    LIBIW4X_UTILITY_SYMEXPORT void
+    say_hello (std::ostream&, const std::string& name);
+  }
 }

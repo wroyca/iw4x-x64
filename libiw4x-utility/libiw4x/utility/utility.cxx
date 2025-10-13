@@ -5,14 +5,17 @@
 
 using namespace std;
 
-namespace iw4x::utility
+namespace iw4x
 {
-  void
-  say_hello (ostream& o, const string& n)
+  namespace utility
   {
-    if (n.empty ())
-      throw invalid_argument ("empty name");
+    void
+    say_hello (ostream& o, const string& n)
+    {
+      if (n.empty ())
+        throw invalid_argument ("empty name");
 
-    o << "Hello, " << n << '!' << endl;
+      o << "Hello, " << n << '!' << endl;
+    }
   }
 }
