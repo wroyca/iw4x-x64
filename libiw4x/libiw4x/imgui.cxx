@@ -1,7 +1,6 @@
 #include <libiw4x/imgui.hxx>
 
 #include <d3d9.h>
-
 #ifdef _MSC_VER
 #  pragma comment(lib, "d3d9.lib")
 #endif

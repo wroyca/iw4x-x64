@@ -2,11 +2,9 @@
 
 #include <boost/signals2.hpp>
 
-#include <libiw4x/utility/utility-win32.hxx>
-
 #include <libiw4x/export.hxx>
 
-// Forward declarations for D3D9
+// Forward declarations for D3D9.
 //
 struct IDirect3DDevice9;
 struct IDirect3D9;
@@ -15,9 +13,9 @@ namespace iw4x
 {
   class LIBIW4X_SYMEXPORT renderer
   {
+  public:
     using signal = boost::signals2::signal<void (IDirect3DDevice9*)>;
 
-  public:
     renderer ();
 
     // Get the frame rendering signal for connecting callbacks
@@ -32,16 +30,19 @@ namespace iw4x
   private:
     // Internal signal for frame events
     //
-    signal frame_signal;
+    signal frame_signal_;
 
-    // Friend function for DirectX hook
+    // Dispatch frame notifications to all connected slots.
     //
+    void
+    notify (IDirect3DDevice9*);
+
     friend void
-    notify_frame_render (IDirect3DDevice9* device);
+    dispatch_frame (IDirect3DDevice9*);
   };
 
-  // Global function to dispatch frame rendering events
+  // Global dispatcher for frame events.
   //
   void
-  notify_frame_render (IDirect3DDevice9* device);
+  dispatch_frame (IDirect3DDevice9*);
 }
