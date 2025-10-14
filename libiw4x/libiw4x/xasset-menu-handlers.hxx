@@ -1,8 +1,14 @@
 #pragma once
 
-#include <libiw4x/database.hxx>
+#include <vector>
+#include <string>
 
-#include <libiw4x/utility-win32.hxx>
+#include <libiw4x/database.hxx>
+#include <libiw4x/renderer.hxx>
+
+#include <libiw4x/utility/utility-win32.hxx>
+
+#include <libiw4x/export.hxx>
 
 namespace iw4x
 {
@@ -13,13 +19,13 @@ namespace iw4x
   class menu_handlers
   {
   public:
-    menu_handlers ();
+    menu_handlers (renderer&);
 
     menuDef_t*
-    find_menu (const string& name);
+    find_menu (const std::string& name);
 
     itemDef_s*
-    find_item (menuDef_t*, const string& name);
+    find_item (menuDef_t*, const std::string& name);
 
     enum class event_type
     {
@@ -33,9 +39,9 @@ namespace iw4x
     };
 
     MenuEventHandlerSet*
-    make_handler_set (const vector<string>& commands);
+    make_handler_set (const std::vector<std::string>& commands);
 
     MenuEventHandler*
-    make_handler (const string& command, event_type type);
+    make_handler (const std::string& command, event_type type);
   };
 }

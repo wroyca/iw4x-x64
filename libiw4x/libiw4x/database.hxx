@@ -1,6 +1,11 @@
 #pragma once
 
+// FIXME: Forward declare instead.
+//
 #include <d3d9.h>
+#ifdef _MSC_VER
+#  pragma comment(lib, "d3d9.lib")
+#endif
 
 struct expressionEntry;
 struct ExpressionSupportingData;

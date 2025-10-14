@@ -1,11 +1,111 @@
 #include <libiw4x/iw4x.hxx>
 
+#include <array>
+#include <iostream>
+
+extern "C"
+{
+  #include <io.h>
+}
+
 #include <libiw4x/renderer.hxx>
 #include <libiw4x/imgui.hxx>
-#include <libiw4x/component/menu-handlers.hxx>
+#include <libiw4x/xasset-menu-handlers.hxx>
+
+using namespace std;
+using namespace iw4x::utility;
 
 namespace iw4x
 {
+  namespace
+  {
+    void
+    attach_console ()
+    {
+      // The subtlety here is that Windows has many ways to end up with stdout
+      // and stderr pointing *somewhere* (sometimes to an actual console,
+      // sometimes to a pipe, sometimes to a completely invalid handle). We do
+      // not want to attach to `CONOUT$` in cases where the existing handles are
+      // already valid and intentional, as this would silently discard the real
+      // output sink.
+      //
+      // Instead, we first check `_fileno(stdout)` and `_fileno(stderr)`. The
+      // MSVCRT sets these up at startup and will return `-2`
+      // (`_NO_CONSOLE_FILENO`) if the file is invalid. This check is more
+      // trustworthy than calling `GetStdHandle()`, which can return stale
+      // handle IDs that may already be reused for unrelated objects by the time
+      // we run.
+      //
+      if (_fileno (stdout) >= 0 || _fileno (stderr) >= 0)
+      {
+        // If either `_fileno()` is valid, we go one step further: `_fileno()`
+        // itself had a bug (http://crbug.com/358267) in SUBSYSTEM:WINDOWS
+        // builds for certain MSVC versions (VS2010 to VS2013), so we
+        // double-check by calling `_get_osfhandle()` to confirm that the
+        // underlying OS handle is valid. Only if both streams are invalid do we
+        // attempt to attach a console.
+        //
+        intptr_t stdout_handle (_get_osfhandle (_fileno (stdout)));
+        intptr_t stderr_handle (_get_osfhandle (_fileno (stderr)));
+
+        if (stdout_handle >= 0 || stderr_handle >= 0)
+          return;
+      }
+
+      // At this point, we've confirmed that neither standard stream is in use,
+      // so we can now safely attach to the parent process's console.
+      //
+      if (AttachConsole (ATTACH_PARENT_PROCESS) == 0)
+      {
+        unsigned int error (GetLastError ());
+
+        // `ERROR_ACCESS_DENIED` here usually means "you are already attached".
+        // In that case, doing anything else would be redundant at best and
+        // risky at worst, so we bail out.
+        //
+        if (error == ERROR_ACCESS_DENIED)
+          return;
+
+        // If we get ERROR_GEN_FAILURE, then the parent process's console is
+        // effectively unusable, often because the parent crashed or otherwise
+        // vanished. Creating a new console in this case would only produce an
+        // orphan window with no practical audience.
+        //
+        if (error == ERROR_GEN_FAILURE)
+          return;
+      }
+
+      // Once attached, we rebind `stdout` and `stderr` to `CONOUT$` using
+      // `freopen()`. We also `_dup2()` the file descriptors (1 for stdout, 2
+      // for stderr) so that any code using the raw FD API sees the same
+      // handles.
+      //
+      // Note: failed that, there is not much we can do. We avoid throwing
+      // exceptions, as this does not impact iw4x's core functionality and
+      // diagnostic output is not possible, since rebind is unavailable.
+      // This is a best-effort redirection; all errors are suppressed
+      // unconditionally.
+      //
+      bool stdout_rebound (false);
+      bool stderr_rebound (false);
+
+      if (freopen ("CONOUT$", "w", stdout) != nullptr &&
+          _dup2 (_fileno (stdout), 1) != -1)
+        stdout_rebound = true;
+
+      if (freopen ("CONOUT$", "w", stderr) != nullptr &&
+          _dup2 (_fileno (stderr), 2) != -1)
+        stderr_rebound = true;
+
+      // If stream were rebound, realign iostream objects (`cout`, `cerr`, etc.)
+      // with the C FILE streams. Failed that, both could buffer independently
+      // and produce confusingly interleaved output.
+      //
+      if (stdout_rebound && stderr_rebound)
+        ios::sync_with_stdio ();
+    }
+  }
+
   extern "C"
   {
     BOOL WINAPI
@@ -32,10 +132,7 @@ namespace iw4x
       uintptr_t target (0x140358EBC);
       uintptr_t source (reinterpret_cast<decltype (source)> (+[] ()
       {
-        // The CRT startup sequence normally begins by seeding its own internal
-        // security cookie. This is the value checked by /GS instrumentation to
-        // detect stack corruption. We must call `__security_init_cookie()`
-        // ourselves here to preserve the compiler's expected invariants.
+        // __security_init_cookie
         //
         reinterpret_cast<void (*) ()> (0x1403598CC) ();
 
@@ -50,7 +147,7 @@ namespace iw4x
         //
         HMODULE m;
         if (!GetModuleHandleEx (GET_MODULE_HANDLE_EX_FLAG_PIN |
-                                  GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+                                GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
                                 reinterpret_cast<LPCTSTR> (DllMain),
                                 &m))
         {
@@ -58,8 +155,18 @@ namespace iw4x
           exit (1);
         }
 
-        // We want the process to operate relative to the DLL's location rather
-        // than whatever directory the OS happened to launch it from.
+        // By default, the process inherits its working directory from whatever
+        // environment or launcher invoked it, which may vary across setups and
+        // lead to unpredictable relative path resolution.
+        //
+        // The strategy here is to explicitly realign the working directory to
+        // the DLL's own location. That is, we effectively makes all relative
+        // file operations resolve against the module's directory when the
+        // process is hosted or started indirectly.
+        //
+        // Note also that failure to resolve or change the directory is treated
+        // as fatal, since continuing under an indeterminate working path would
+        // likely lead to cascading file I/O errors later on.
         //
         if (char p [MAX_PATH]; GetModuleFileName (m, p, MAX_PATH))
         {
@@ -79,7 +186,16 @@ namespace iw4x
           exit (1);
         }
 
-        // Unprotect binary
+#ifdef LIBIW4X_UNPROTECT
+        // Relax the binary's memory protection to permit writes to code or data
+        // segments that are otherwise read-only.
+        //
+        // Note that this is strictly a debugging aid, that is, it bypasses
+        // normal memory safety guarantees and effectively disables DEP for the
+        // module. Under no circumstance should it be enabled in production
+        // builds or distributed binaries. Its presence is conditional on
+        // LIBIW4X_UNPROTECT to make the intent explicit and to avoid accidental
+        // inclusion.
         //
         MODULEINFO mi;
         if (GetModuleInformation (GetCurrentProcess (),
@@ -87,11 +203,10 @@ namespace iw4x
                                   &mi,
                                   sizeof (mi)))
         {
-          DWORD o (0);
-          if (!VirtualProtect (mi.lpBaseOfDll,
-                               mi.SizeOfImage,
-                               PAGE_EXECUTE_READWRITE,
-                               &o))
+          if (DWORD o (0); !VirtualProtect (mi.lpBaseOfDll,
+                                            mi.SizeOfImage,
+                                            PAGE_EXECUTE_READWRITE,
+                                            &o))
           {
             cerr << "error: unable to change memory protection" << endl;
             exit (1);
@@ -102,6 +217,7 @@ namespace iw4x
           cerr << "error: unable to retrieve module information" << endl;
           exit (1);
         }
+#endif
 
         // Quick Patch
         //
@@ -166,68 +282,41 @@ namespace iw4x
         //
         renderer renderer;
         imgui imgui (renderer);
+        menu_handlers menu_handlers (renderer);
 
-        // TODO: Write scheduler
-        //
-        CreateThread (nullptr, 0, [] (LPVOID) -> DWORD
-        {
-          Sleep (5000);
-          menu_handlers handlers;
-          return 0;
-        }, nullptr, 0, nullptr);
-
-        // Once the security cookie has been initialized and our detours
-        // installed, control must be handed back to the CRT. The designated
-        // entry point for this purpose is `__scrt_common_main_seh()`.
-        //
-        // Note that it's the mechanism by which the MSVC runtime transitions
-        // from raw process state into a valid C/C++ execution environment.
-        // Skipping or bypassing it would leave the process in an indeterminate
-        // state, with undefined behavior on both normal execution paths and
-        // during shutdown.
+        // __scrt_common_main_seh
         //
         return reinterpret_cast<int (*) ()> (0x140358D48) ();
       }));
 
-      // Encode our 64-bit absolute jump:
+      // Build a 64-bit absolute jump.
       //
-      // - FF 25 00000000   ; JMP QWORD PTR [RIP + 0]
-      // - <64-bit address> ; Absolute destination in little-endian
+      // x86-64 has no single-instruction form that takes a 64-bit immediate.
+      // The canonical solution is an indirect, RIP-relative jump followed by
+      // the eight-byte destination in little-endian form.
       //
-      // On x86-64, the `jmp` instruction does not provide an immediate
-      // absolute form. Instead, the canonical way to transfer control to a
-      // 64-bit address is via an indirect jump through memory. The form
-      // `FF /4` encodes `jmp r/m64`, and when paired with a RIP-relative
-      // addressing mode, it allows embedding the destination address as a
-      // literal directly after the instruction.
+      // With a zero displacement the memory operand refers to the eight bytes
+      // immediately after the six-byte opcode. The processor loads that value
+      // and transfers control to it. The total sequence is therefore 14 bytes:
+      // six for the opcode and displacement, eight for the address.
       //
-      // With a displacement of zero, the effective address becomes
-      // "RIP + 0", that is, the address immediately following the
-      // instruction. The processor fetches the 64-bit value stored there and
-      // uses it as the jump target.
-      //
-      // The resulting sequence is 14 bytes total: six bytes for the opcode
-      // and displacement, followed by the eight-byte absolute address.
-      //
-      array<unsigned char, 14> sequence
+      std::array<unsigned char, 14> sequence (
       {
-        {
-          static_cast<unsigned char> (0xFF),
-          static_cast<unsigned char> (0x25),
-          static_cast<unsigned char> (0x00),
-          static_cast<unsigned char> (0x00),
-          static_cast<unsigned char> (0x00),
-          static_cast<unsigned char> (0x00),
-          static_cast<unsigned char> ((source)       & 0xFF),
-          static_cast<unsigned char> ((source >> 8)  & 0xFF),
-          static_cast<unsigned char> ((source >> 16) & 0xFF),
-          static_cast<unsigned char> ((source >> 24) & 0xFF),
-          static_cast<unsigned char> ((source >> 32) & 0xFF),
-          static_cast<unsigned char> ((source >> 40) & 0xFF),
-          static_cast<unsigned char> ((source >> 48) & 0xFF),
-          static_cast<unsigned char> ((source >> 56) & 0xFF)
-        }
-      };
+        static_cast<unsigned char> (0xFF),
+        static_cast<unsigned char> (0x25),
+        static_cast<unsigned char> (0x00),
+        static_cast<unsigned char> (0x00),
+        static_cast<unsigned char> (0x00),
+        static_cast<unsigned char> (0x00),
+        static_cast<unsigned char> (source       & 0xFF),
+        static_cast<unsigned char> (source >> 8  & 0xFF),
+        static_cast<unsigned char> (source >> 16 & 0xFF),
+        static_cast<unsigned char> (source >> 24 & 0xFF),
+        static_cast<unsigned char> (source >> 32 & 0xFF),
+        static_cast<unsigned char> (source >> 40 & 0xFF),
+        static_cast<unsigned char> (source >> 48 & 0xFF),
+        static_cast<unsigned char> (source >> 56 & 0xFF)
+      });
 
       attach_console ();
 

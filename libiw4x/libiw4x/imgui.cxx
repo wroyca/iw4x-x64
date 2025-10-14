@@ -1,7 +1,6 @@
 #include <libiw4x/imgui.hxx>
 
 #include <d3d9.h>
-
 #ifdef _MSC_VER
 #  pragma comment(lib, "d3d9.lib")
 #endif
@@ -10,16 +9,19 @@
 #include <imgui/backends/imgui_impl_dx9.h>
 #include <imgui/backends/imgui_impl_win32.h>
 
-#include <libiw4x/utility-win32.hxx>
+#include <iostream>
+#include <mutex>
+#include <sstream>
+#include <stdexcept>
 
 // Forward declare the ImGui Win32 message handler. See imgui_impl_win32.h for
 // context.
 //
-extern IMGUI_IMPL_API LRESULT
-ImGui_ImplWin32_WndProcHandler (HWND hWnd,
-                                UINT msg,
-                                WPARAM wParam,
-                                LPARAM lParam);
+extern IMGUI_IMPL_API
+LRESULT ImGui_ImplWin32_WndProcHandler (HWND, UINT, WPARAM, LPARAM);
+
+using namespace std;
+using namespace iw4x::utility;
 
 namespace iw4x
 {
@@ -32,14 +34,14 @@ namespace iw4x
 
   imgui::imgui (renderer& r)
   {
-    r.on_frame ().connect ([this] (IDirect3DDevice9* device)
+    r.on_frame ().connect ([this] (IDirect3DDevice9* d)
     {
       // Initialize ImGui lazily on the first frame. We avoid frontloading this
       // work during renderer construction since we need a valid device anyway,
       // and there is no point in doing it twice if the first frame never
       // arrives.
       //
-      call_once (imgui_init, [device] ()
+      call_once (imgui_init, [d] ()
       {
         HRESULT hr;
 
@@ -48,56 +50,35 @@ namespace iw4x
         // sanctioned path. The detour feels roundabout but avoids maintaining
         // parallel knowledge of windowing state.
         //
-        IDirect3DSwapChain9* swap_chain;
-        hr = device->GetSwapChain (0, &swap_chain);
+        IDirect3DSwapChain9* sc;
+        hr = d->GetSwapChain (0, &sc);
+
         if (FAILED (hr))
-          throw runtime_error ("unable to retrieve DirectX swap chain");
+          throw runtime_error ("unable to retrieve swap chain");
 
         D3DPRESENT_PARAMETERS pp;
-        hr = swap_chain->GetPresentParameters (&pp);
-        swap_chain->Release ();
+        hr = sc->GetPresentParameters (&pp);
+        sc->Release ();
+
         if (FAILED (hr))
           throw runtime_error ("unable to retrieve presentation parameters");
 
         HWND hwnd (pp.hDeviceWindow);
-        if (hwnd == nullptr)
-        {
-          // In some cases the device omits its owning window. Falling back to
-          // the foreground window is not strictly correct, but it lets us keep
-          // running without introducing a second initialization path. If this
-          // proves insufficient in practice, the renderer will need to grow a
-          // proper mechanism for supplying the window explicitly.
-          //
-          cerr << "warning: device window could not be determined; "
-               << "defaulting to current foreground window" << endl;
-
-          hwnd = GetForegroundWindow ();
-        }
 
         // With the handle resolved we can commit to an ImGui context. Input and
         // docking are enabled up front to avoid layering configuration later.
         // Note that we rely on ImGui's defaults for most behavior.
         //
-        IMGUI_CHECKVERSION ();
         ImGui::CreateContext ();
-        ImGuiIO& io (ImGui::GetIO ());
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
-        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-        io.MouseDrawCursor = true;
 
-        ImGui::StyleColorsDark ();
-
-        // The platform and renderer backends form the actual bridge. Without
-        // both in place the context is inert. We fail fast on errors rather
-        // than attempting recovery, since partial initialization would only
-        // complicate the renderer state machine.
-        //
         if (!ImGui_ImplWin32_Init (hwnd))
           throw runtime_error ("unable to initialize ImGui Win32 backend");
 
-        if (!ImGui_ImplDX9_Init (device))
-          throw runtime_error ("unable to initialize DirectX9 backend");
+        if (!ImGui_ImplDX9_Init (d))
+          throw runtime_error ("unable to initialize ImGui DirectX9 backend");
+
+        ImGuiIO& io (ImGui::GetIO ());
+        io.MouseDrawCursor = true;
 
         // Hook window procedure to forward messages to ImGui.
         //
@@ -118,7 +99,7 @@ namespace iw4x
         }
       });
 
-      render_frame (device);
+      render_frame (d);
     });
   }
 
@@ -145,27 +126,63 @@ namespace iw4x
   }
 
   LRESULT CALLBACK
-  imgui::wnd_proc (HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+  imgui::wnd_proc (HWND h, UINT msg, WPARAM wp, LPARAM lp)
   {
-    // Forward the message to ImGui first. If ImGui handles it, we're done.
-    // Otherwise, we pass it through to the original window procedure.
+    // Forward the message to ImGui first.
     //
-    LRESULT imgui_wnd_proc (ImGui_ImplWin32_WndProcHandler (hwnd,
-                                                            msg,
-                                                            wparam,
-                                                            lparam));
-    if (imgui_wnd_proc != 0)
-      return imgui_wnd_proc;
+    ImGui_ImplWin32_WndProcHandler (h, msg, wp, lp);
 
-    // Fallback to iw4mp window procedure if ImGui doesn't handle the
-    // message.
+    // Check if ImGui wants to capture this input. If so, block it from
+    // reaching the game to prevent unintended interactions (e.g., clicking
+    // game menus while interacting with ImGui windows).
+    //
+    ImGuiIO& io (ImGui::GetIO ());
+
+    // Block mouse input if ImGui wants mouse capture.
+    //
+    if (io.WantCaptureMouse)
+    {
+      switch (msg)
+      {
+      case WM_LBUTTONDOWN:
+      case WM_LBUTTONUP:
+      case WM_LBUTTONDBLCLK:
+      case WM_RBUTTONDOWN:
+      case WM_RBUTTONUP:
+      case WM_RBUTTONDBLCLK:
+      case WM_MBUTTONDOWN:
+      case WM_MBUTTONUP:
+      case WM_MBUTTONDBLCLK:
+      case WM_MOUSEWHEEL:
+      case WM_MOUSEHWHEEL:
+      case WM_MOUSEMOVE:
+        return 0;  // Block mouse input
+      }
+    }
+
+    // Block keyboard input if ImGui wants keyboard capture.
+    //
+    if (io.WantCaptureKeyboard)
+    {
+      switch (msg)
+      {
+      case WM_KEYDOWN:
+      case WM_KEYUP:
+      case WM_SYSKEYDOWN:
+      case WM_SYSKEYUP:
+      case WM_CHAR:
+        return 0;  // Block keyboard input
+      }
+    }
+
+    // ImGui doesn't want this input, forward to original window procedure.
     //
     if (original_wnd_proc_ != nullptr)
-      return CallWindowProcW (original_wnd_proc_, hwnd, msg, wparam, lparam);
+      return CallWindowProcW (original_wnd_proc_, h, msg, wp, lp);
 
     // If no original procedure was stored, fall back to Windows default
     // handler.
     //
-    return DefWindowProcW (hwnd, msg, wparam, lparam);
+    return DefWindowProcW (h, msg, wp, lp);
   }
 }

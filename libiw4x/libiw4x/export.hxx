@@ -19,7 +19,7 @@
 #else
 // If none of the above macros are defined, then we assume we are being used
 // by some third-party build system that cannot/doesn't signal the library
-// type being linked
+// type being linked.
 //
 #  error define LIBIW4X_STATIC or LIBIW4X_SHARED preprocessor macro to signal libiw4x library type being linked
 #endif
