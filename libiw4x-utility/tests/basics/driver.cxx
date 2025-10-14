@@ -1,16 +1,17 @@
 #include <sstream>
 #include <stdexcept>
 
+#include <libiw4x/utility/utility.hxx>
 #include <libiw4x/utility/version.hxx>
-#include <libiw4x/utility/iw4x-utility.hxx>
 
 #undef NDEBUG
 #include <cassert>
 
-int main ()
+int
+main ()
 {
   using namespace std;
-  using namespace iw4x_utility;
+  using namespace iw4x::utility;
 
   // Basics.
   //
