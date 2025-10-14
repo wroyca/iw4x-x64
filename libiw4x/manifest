@@ -11,3 +11,4 @@ email: wroy@proton.me
 # build-error-email: wroy@proton.me
 depends: * build2 >= 0.18.0-
 depends: * bpkg >= 0.18.0-
+depends: libiw4x-utility == $

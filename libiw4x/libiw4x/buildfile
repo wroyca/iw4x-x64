@@ -1,8 +1,11 @@
 intf_libs = # Interface dependencies.
 impl_libs = # Implementation dependencies.
 
+import intf_libs += libiw4x-utility%lib{iw4x-utility}
+
 lib{iw4x}: {hxx ixx txx cxx}{** -version} \
            {hxx            }{    version} \
+           {def            }{**         } \
            $impl_libs $intf_libs
 
 hxx{version}: in{version} $src_root/manifest
