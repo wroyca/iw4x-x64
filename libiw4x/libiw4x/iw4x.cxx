@@ -9,8 +9,9 @@ extern "C"
 }
 
 #include <libiw4x/renderer.hxx>
-#include <libiw4x/imgui.hxx>
-#include <libiw4x/xasset-menu-handlers.hxx>
+#include <libiw4x/renderer-imgui.hxx>
+#include <libiw4x/database.hxx>
+#include <libiw4x/database-menu-handlers.hxx>
 
 using namespace std;
 using namespace iw4x::utility;

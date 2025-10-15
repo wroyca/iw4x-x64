@@ -10,13 +10,7 @@ lib{iw4x}: {hxx ixx txx cxx}{** -version} \
            {hxx            }{    version} \
            $impl_libs $intf_libs
 
-# On Windows, build2 defaults to dropping the 'lib' prefix from library names,
-# since the platform itself does not conventionally use it. Normally that's
-# harmless, but in our case the name must stay intact: iw4mp has been patched
-# to look for libiw4x.dll explicitly. If build2 were allowed to "correct" the
-# name, the import would fail at runtime.
-#
-lib{iw4x}: bin.lib.prefix = "lib"
+hxx{version}: in{version} $src_root/manifest
 
 # Build options.
 #
@@ -27,6 +21,7 @@ objs{*}: cxx.poptions += -DLIBIW4X_SHARED_BUILD
 
 # Export options.
 #
+lib{iw4x}: bin.lib.prefix = "lib"
 lib{iw4x}:
 {
   cxx.export.poptions = "-I$out_root" "-I$src_root"

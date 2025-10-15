@@ -1,4 +1,4 @@
-#include <libiw4x/imgui.hxx>
+#include <libiw4x/renderer-imgui.hxx>
 
 #include <d3d9.h>
 #ifdef _MSC_VER
@@ -17,8 +17,8 @@
 // Forward declare the ImGui Win32 message handler. See imgui_impl_win32.h for
 // context.
 //
-extern IMGUI_IMPL_API
-LRESULT ImGui_ImplWin32_WndProcHandler (HWND, UINT, WPARAM, LPARAM);
+extern IMGUI_IMPL_API LRESULT
+ImGui_ImplWin32_WndProcHandler (HWND, UINT, WPARAM, LPARAM);
 
 using namespace std;
 using namespace iw4x::utility;
