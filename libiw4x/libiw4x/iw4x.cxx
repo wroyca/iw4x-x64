@@ -2,10 +2,11 @@
 
 #include <ios>
 #include <iostream>
+#include <array>
 
 extern "C"
 {
-#include <io.h>
+  #include <io.h>
 }
 
 using namespace std;
@@ -121,7 +122,7 @@ namespace iw4x
       // IW4's main thread, outside the constraints imposed by the loader lock.
       //
       uintptr_t target (0x140358EBC);
-      uintptr_t source (reinterpret_cast<decltype (source)> (+[] ()
+      uintptr_t source (reinterpret_cast<uintptr_t> (+[] ()
       {
         // __security_init_cookie
         //
@@ -159,7 +160,8 @@ namespace iw4x
         // as fatal, since continuing under an indeterminate working path would
         // likely lead to cascading file I/O errors later on.
         //
-        if (char p [MAX_PATH]; GetModuleFileName (m, p, MAX_PATH))
+        char p [MAX_PATH];
+        if (GetModuleFileName (m, p, MAX_PATH))
         {
           string s (p);
           size_t i (s.rfind ('\\'));
@@ -177,6 +179,76 @@ namespace iw4x
           exit (1);
         }
 
+        // Quick Patch
+        //
+        // This section removes runtime dependencies on Xbox Live and
+        // XGameRuntime components. No structural change is made to the
+        // surrounding logic. Each site was verified to be self-contained and
+        // safe to short-circuit.
+        //
+        ([] (void (*_) (uintptr_t, int, size_t))
+          {
+            _(0x1401B2FCA, 0x31, 1); // Bypass XGameRuntimeInitialize
+            _(0x1401B2FCB, 0xC0, 1); //
+            _(0x1401B2FCC, 0x90, 3); //
+            _(0x1401B308F, 0x31, 1); //
+            _(0x1401B3090, 0xC0, 1); //
+            _(0x1401B3091, 0x90, 3); //
+
+            _(0x1402A6A4B, 0x90, 5); // NOP out CurlX initialization
+            _(0x1402A6368, 0x90, 5); // NOP out CurlX cleanup
+
+            _(0x1402A5F70, 0x90, 3); // Skip flag clobbering
+            _(0x1402A5F73, 0x74, 1); // Bypass Xbox Live restriction
+            _(0x1400F5B86, 0xEB, 1); // Skip XBOXLIVE_SIGNINCHANGED
+            _(0x1400F5BAC, 0xEB, 1); // Skip XBOXLIVE_SIGNEDOUT
+            _(0x14010B332, 0xEB, 1); // Bypass Xbox Live permission
+            _(0x1401BA1FE, 0xEB, 1); // Always pass signed-in status
+
+            _(0x140271ED0, 0xC3, 1); // Disable popup
+
+            _(0x1400F6BC4, 0x90, 2); // Skip playlist download check
+            _(0x1400FC833, 0xEB, 1); // Skip config string mismatch (1)
+            _(0x1400D2AFC, 0x90, 2); // Skip config string mismatch (2)
+
+            _(0x1400E4DA0, 0x33, 1); // Skip crash from stats
+            _(0x1400E4DA1, 0xC0, 1); //
+            _(0x1400E4DA2, 0xC3, 1); //
+          })
+        ([] (uintptr_t address, int value, size_t size)
+          {
+            DWORD o (0);
+            void* a (reinterpret_cast<void*> (address));
+
+            if (VirtualProtect (a, size, PAGE_EXECUTE_READWRITE, &o) == 0)
+            {
+              cerr << "error: unable to change page protection at address "
+                   << hex << address << dec << endl;
+
+              exit (1);
+            }
+
+            if (memset (a, value, size) == nullptr)
+            {
+              cerr << "error: unable to write to memory at address " << hex
+                   << address << dec << endl;
+
+              exit (1);
+            }
+
+            if (VirtualProtect (a, size, o, &o) == 0)
+            {
+              cerr << "warning: unable to restore page protection at address "
+                   << hex << address << dec << endl;
+            }
+
+            if (FlushInstructionCache (GetCurrentProcess (), a, size) == 0)
+            {
+              cerr << "warning: unable to flush instruction cache at address "
+                   << hex << address << dec << endl;
+            }
+          });
+
         // __scrt_common_main_seh
         //
         return reinterpret_cast<int (*) ()> (0x140358D48) ();
@@ -193,7 +265,7 @@ namespace iw4x
       // and transfers control to it. The total sequence is therefore 14 bytes:
       // six for the opcode and displacement, eight for the address.
       //
-      std::array<unsigned char, 14> sequence (
+      array<unsigned char, 14> sequence (
       {
         static_cast<unsigned char> (0xFF),
         static_cast<unsigned char> (0x25),
