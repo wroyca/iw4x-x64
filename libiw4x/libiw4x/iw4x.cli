@@ -1,0 +1,69 @@
+// file      : libiw4x/iw4x.cli
+// license   : MIT; see accompanying LICENSE file
+
+include <cstdint>; // uint16_t
+
+"\name=iw4x"
+"\summary=Call of Duty: Modern Warfare 2 client"
+
+namespace iw4x
+{
+  {
+    "<options>",
+
+    "\h|SYNOPSIS|
+
+     \c{\b{iw4x} [<options>]}
+
+     \h|DESCRIPTION|
+
+     \cb{IW4x} accepts various command-line options to control its behavior."
+  }
+
+  class options
+  {
+    "\h#options|OPTIONS|"
+
+    bool -v
+    {
+      "Print diagnostic. This options is equivalent to
+       \cb{--verbose 1}."
+    }
+
+    bool -V
+    {
+      "Print all underlying diagnostic. This options is
+       equivalent to \cb{--verbose 3}."
+    }
+
+    bool --quiet|-q
+    {
+      "Run quietly, only printing error messages. This option is equivalent
+       to \cb{--verbose 0}."
+    }
+
+    uint16_t --verbose = 1
+    {
+      "<level>",
+      "Set the diagnostics verbosity to <level> between 0 and 3. Level 0
+       disables any non-error messages while level 3 produces lots of
+       information, with level 1 being the default. The following additional
+       types of diagnostics are produced at each level:
+
+       \ol|
+
+       \li|Information that could be helpful to the user.|
+
+       \li|Information that could be helpful to the developer.|
+
+       \li|Even more detailed information.||"
+    }
+  };
+
+  "
+  \h|EXIT STATUS|
+
+  The client returns zero on successful exit. A non-zero exit status indicates
+  an error occurred during startup or gameplay.
+  "
+}
