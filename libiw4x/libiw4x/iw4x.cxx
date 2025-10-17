@@ -187,81 +187,75 @@ namespace iw4x
           exit (1);
         }
 
-#ifdef LIBIW4X_UNPROTECT
-        // Relax the binary's memory protection to permit writes to code or data
-        // segments that are otherwise read-only.
-        //
-        // Note that this is strictly a debugging aid, that is, it bypasses
-        // normal memory safety guarantees and effectively disables DEP for the
-        // module. Under no circumstance should it be enabled in production
-        // builds or distributed binaries. Its presence is conditional on
-        // LIBIW4X_UNPROTECT to make the intent explicit and to avoid accidental
-        // inclusion.
-        //
-        MODULEINFO mi;
-        if (GetModuleInformation (GetCurrentProcess (),
-                                  GetModuleHandle (nullptr),
-                                  &mi,
-                                  sizeof (mi)))
-        {
-          if (DWORD o (0); !VirtualProtect (mi.lpBaseOfDll,
-                                            mi.SizeOfImage,
-                                            PAGE_EXECUTE_READWRITE,
-                                            &o))
-          {
-            cerr << "error: unable to change memory protection" << endl;
-            exit (1);
-          }
-        }
-        else
-        {
-          cerr << "error: unable to retrieve module information" << endl;
-          exit (1);
-        }
-#endif
-
         // Quick Patch
         //
-        ([] (auto&& _)
-        {
-          _(0x1401B2FCA, 0x31, 1); // Bypass XGameRuntimeInitialize
-          _(0x1401B2FCB, 0xC0, 1); //
-          _(0x1401B2FCC, 0x90, 3); //
-          _(0x1401B308F, 0x31, 1); //
-          _(0x1401B3090, 0xC0, 1); //
-          _(0x1401B3091, 0x90, 3); //
+        // Removes runtime dependencies on Xbox Live and XGameRuntime
+        // components. No structural change is made to the surrounding logic.
+        // Each site was verified to be self-contained and safe to
+        // short-circuit.
+        //
+        ([] (void (*_) (uintptr_t, int, size_t))
+          {
+            _(0x1401B2FCA, 0x31, 1); // Bypass XGameRuntimeInitialize
+            _(0x1401B2FCB, 0xC0, 1); //
+            _(0x1401B2FCC, 0x90, 3); //
+            _(0x1401B308F, 0x31, 1); //
+            _(0x1401B3090, 0xC0, 1); //
+            _(0x1401B3091, 0x90, 3); //
 
-          _(0x1402A6A4B, 0x90, 5); // NOP out CurlX initialization
-          _(0x1402A6368, 0x90, 5); // NOP out CurlX cleanup
+            _(0x1402A6A4B, 0x90, 5); // NOP out CurlX initialization
+            _(0x1402A6368, 0x90, 5); // NOP out CurlX cleanup
 
-          _(0x1402A5F70, 0x90, 3); // Skip flag clobbering
-          _(0x1402A5F73, 0x74, 1); // Bypass Xbox Live restriction
-          _(0x1400F5B86, 0xEB, 1); // Skip XBOXLIVE_SIGNINCHANGED
-          _(0x1400F5BAC, 0xEB, 1); // Skip XBOXLIVE_SIGNEDOUT
-          _(0x14010B332, 0xEB, 1); // Bypass Xbox Live permission
-          _(0x1401BA1FE, 0xEB, 1); // Always pass signed-in status
+            _(0x1402A5F70, 0x90, 3); // Skip flag clobbering
+            _(0x1402A5F73, 0x74, 1); // Bypass Xbox Live restriction
+            _(0x1400F5B86, 0xEB, 1); // Skip XBOXLIVE_SIGNINCHANGED
+            _(0x1400F5BAC, 0xEB, 1); // Skip XBOXLIVE_SIGNEDOUT
+            _(0x14010B332, 0xEB, 1); // Bypass Xbox Live permission
+            _(0x1401BA1FE, 0xEB, 1); // Always pass signed-in status
 
-          _(0x140271ED0, 0xC3, 1); // Return immediately from popup creation function (disables popups)
+            _(0x140271ED0, 0xC3, 1); // Disable popup
 
-          _(0x1400F6BC4, 0x90, 2); // Skip playlist download check
-          _(0x1400FC833, 0xEB, 1); // Skip config string mismatch (1)
-          _(0x1400D2AFC, 0x90, 2); // Skip config string mismatch (2)
+            _(0x1400F6BC4, 0x90, 2); // Skip playlist download check
+            _(0x1400FC833, 0xEB, 1); // Skip config string mismatch (1)
+            _(0x1400D2AFC, 0x90, 2); // Skip config string mismatch (2)
 
-          _(0x1400E4DA0, 0x33, 1); // Skip crash from stats
-          _(0x1400E4DA1, 0xC0, 1); //
-          _(0x1400E4DA2, 0xC3, 1); //
-        })
+            _(0x1400E4DA0, 0x33, 1); // Skip crash from stats
+            _(0x1400E4DA1, 0xC0, 1); //
+            _(0x1400E4DA2, 0xC3, 1); //
+          })
+        ([] (uintptr_t address, int value, size_t size)
+          {
+            DWORD o (0);
+            void* a (reinterpret_cast<void*> (address));
 
-        ([] (uintptr_t a, int v, size_t s)
-        {
-          DWORD o (0);
-          void* p (reinterpret_cast<void*> (a));
+            if (VirtualProtect (a, size, PAGE_EXECUTE_READWRITE, &o) == 0)
+            {
+              cerr << "error: unable to change page protection at address "
+                   << hex << address << dec << endl;
 
-          VirtualProtect (p, s, PAGE_EXECUTE_READWRITE, &o);
-          memset (p, v, s);
-          VirtualProtect (p, s, o, &o);
-          FlushInstructionCache (GetCurrentProcess (), p, s);
-        });
+              exit (1);
+            }
+
+            if (memset (a, value, size) == nullptr)
+            {
+              cerr << "error: unable to write to memory at address " << hex
+                   << address << dec << endl;
+
+              exit (1);
+            }
+
+            if (VirtualProtect (a, size, o, &o) == 0)
+            {
+              cerr << "warning: unable to restore page protection at address "
+                   << hex << address << dec << endl;
+            }
+
+            if (FlushInstructionCache (GetCurrentProcess (), a, size) == 0)
+            {
+              cerr << "warning: unable to flush instruction cache at address "
+                   << hex << address << dec << endl;
+            }
+          });
 
         // Subsystem initialization
         //
@@ -301,7 +295,7 @@ namespace iw4x
       // and transfers control to it. The total sequence is therefore 14 bytes:
       // six for the opcode and displacement, eight for the address.
       //
-      std::array<unsigned char, 14> sequence (
+      array<unsigned char, 14> sequence (
       {
         static_cast<unsigned char> (0xFF),
         static_cast<unsigned char> (0x25),
