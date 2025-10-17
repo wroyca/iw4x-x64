@@ -9,6 +9,9 @@ extern "C"
   #include <io.h>
 }
 
+#include <libiw4x/version.hxx>
+#include <libiw4x/options.hxx>
+
 using namespace std;
 
 namespace iw4x
@@ -176,6 +179,35 @@ namespace iw4x
         else
         {
           cerr << "error: unable to retrieve module location" << endl;
+          exit (1);
+        }
+
+        // Parse command-line interface
+        //
+        try
+        {
+          options o (__argc, __argv);
+
+          // Verbosity configuration.
+          //
+          // --verbose, --quiet, -v, -V
+          //
+          uint16_t verb (o.verbose_specified () ? o.verbose () :
+                         o.quiet ()             ? 0 :
+                         o.V ()                 ? 3 :
+                         o.v ()                 ? 1 : verb);
+
+          switch (clamp (verb, uint16_t (0), uint16_t (3)))
+          {
+            case 0: break;
+            case 1: break;
+            case 2: break;
+            case 3: break;
+          }
+        }
+        catch (const cli::exception& e)
+        {
+          cerr << e << endl;
           exit (1);
         }
 
