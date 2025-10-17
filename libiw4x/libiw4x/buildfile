@@ -5,9 +5,9 @@ import intf_libs += libiw4x-utility%lib{iw4x-utility}
 
 options = iw4x-options
 
-lib{iw4x}: {hxx ixx txx cxx}{** -pregenerated/** -options -version} \
-           {hxx            }{                              version} \
-           {def            }{**                                   } \
+lib{iw4x}: {hxx ixx txx cxx}{** -pregenerated/** -$options -version} \
+           {hxx            }{                               version} \
+           {def            }{**                                    } \
            $impl_libs $intf_libs
 
 hxx{version}: in{version} $src_root/manifest
@@ -21,7 +21,6 @@ objs{*}: cxx.poptions += -DLIBIW4X_SHARED_BUILD
 
 # Export options.
 #
-lib{iw4x}: bin.lib.prefix = "lib"
 lib{iw4x}:
 {
   cxx.export.poptions = "-I$out_root" "-I$src_root"
@@ -36,14 +35,14 @@ libs{iw4x}: cxx.export.poptions += -DLIBIW4X_SHARED
 
 # Use pregenerated versions in the consumption build.
 #
-lib{iw4x}: pregenerated/{hxx ixx cxx}{*}: include = (!$develop)
+lib{iw4x}: pregenerated/libiw4x/{hxx ixx cxx}{*}: include = (!$develop)
 
 if! $develop
   cxx.poptions =+ "-I($src_base/pregenerated)" # note: must come first.
 
 # Distribute pregenerated versions only in the consumption build.
 #
-pregenerated/{hxx ixx cxx}{*}: dist = (!$develop)
+pregenerated/libiw4x/{hxx ixx cxx}{*}: dist = (!$develop)
 
 #
 ##
@@ -92,6 +91,8 @@ if $develop
   options = -I $src_root                                            \
             --std c++11                                             \
             --include-prefix $p                                     \
+            --export-symbol LIBIW4X_SYMEXPORT                       \
+            --hxx-prologue '#include <libiw4x/export.hxx>'          \
             --guard-prefix $regex.replace($ucase($p), '[/\\]', '_') \
             --generate-specifier                                    \
             --generate-file-scanner                                 \

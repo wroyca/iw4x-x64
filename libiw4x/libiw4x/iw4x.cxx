@@ -1,8 +1,9 @@
 #include <libiw4x/iw4x.hxx>
 
+#include <algorithm>
+#include <array>
 #include <ios>
 #include <iostream>
-#include <array>
 
 extern "C"
 {
@@ -192,10 +193,11 @@ namespace iw4x
           //
           // --verbose, --quiet, -v, -V
           //
-          uint16_t verb (o.verbose_specified () ? o.verbose () :
-                         o.quiet ()             ? 0 :
-                         o.V ()                 ? 3 :
-                         o.v ()                 ? 1 : verb);
+          uint16_t verb (1);
+          verb = o.verbose_specified () ? o.verbose () :
+                 o.quiet ()             ? 0 :
+                 o.V ()                 ? 3 :
+                 o.v ()                 ? 1 : verb;
 
           switch (clamp (verb, uint16_t (0), uint16_t (3)))
           {

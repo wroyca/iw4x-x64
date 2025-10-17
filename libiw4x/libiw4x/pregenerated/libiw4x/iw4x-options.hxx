@@ -9,6 +9,7 @@
 
 // Begin prologue.
 //
+#include <libiw4x/export.hxx>
 //
 // End prologue.
 
@@ -76,7 +77,7 @@ namespace iw4x
     // Exceptions.
     //
 
-    class exception: public std::exception
+    class LIBIW4X_SYMEXPORT exception: public std::exception
     {
       public:
       virtual void
@@ -86,7 +87,7 @@ namespace iw4x
     ::std::ostream&
     operator<< (::std::ostream&, const exception&);
 
-    class unknown_option: public exception
+    class LIBIW4X_SYMEXPORT unknown_option: public exception
     {
       public:
       virtual
@@ -107,7 +108,7 @@ namespace iw4x
       std::string option_;
     };
 
-    class unknown_argument: public exception
+    class LIBIW4X_SYMEXPORT unknown_argument: public exception
     {
       public:
       virtual
@@ -128,7 +129,7 @@ namespace iw4x
       std::string argument_;
     };
 
-    class missing_value: public exception
+    class LIBIW4X_SYMEXPORT missing_value: public exception
     {
       public:
       virtual
@@ -149,7 +150,7 @@ namespace iw4x
       std::string option_;
     };
 
-    class invalid_value: public exception
+    class LIBIW4X_SYMEXPORT invalid_value: public exception
     {
       public:
       virtual
@@ -180,7 +181,7 @@ namespace iw4x
       std::string message_;
     };
 
-    class eos_reached: public exception
+    class LIBIW4X_SYMEXPORT eos_reached: public exception
     {
       public:
       virtual void
@@ -190,7 +191,7 @@ namespace iw4x
       what () const noexcept;
     };
 
-    class file_io_failure: public exception
+    class LIBIW4X_SYMEXPORT file_io_failure: public exception
     {
       public:
       virtual
@@ -211,7 +212,7 @@ namespace iw4x
       std::string file_;
     };
 
-    class unmatched_quote: public exception
+    class LIBIW4X_SYMEXPORT unmatched_quote: public exception
     {
       public:
       virtual
@@ -246,7 +247,7 @@ namespace iw4x
     // position of the previous scanner should be used as the
     // start position of the next.
     //
-    class scanner
+    class LIBIW4X_SYMEXPORT scanner
     {
       public:
       virtual
@@ -268,7 +269,7 @@ namespace iw4x
       position () = 0;
     };
 
-    class argv_scanner: public scanner
+    class LIBIW4X_SYMEXPORT argv_scanner: public scanner
     {
       public:
       argv_scanner (int& argc,
@@ -308,7 +309,7 @@ namespace iw4x
       bool erase_;
     };
 
-    class argv_file_scanner: public argv_scanner
+    class LIBIW4X_SYMEXPORT argv_file_scanner: public argv_scanner
     {
       public:
       argv_file_scanner (int& argc,
@@ -431,7 +432,7 @@ namespace iw4x
 
 namespace iw4x
 {
-  class options
+  class LIBIW4X_SYMEXPORT options
   {
     public:
     options ();
