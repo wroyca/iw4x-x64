@@ -2,6 +2,7 @@ intf_libs = # Interface dependencies.
 impl_libs = # Implementation dependencies.
 
 import intf_libs += libiw4x-utility%lib{iw4x-utility}
+import intf_libs += libquill%lib{quill}
 
 options = iw4x-options
 

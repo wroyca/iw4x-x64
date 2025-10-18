@@ -10,6 +10,12 @@ extern "C"
   #include <io.h>
 }
 
+#include <quill/Backend.h>
+#include <quill/Frontend.h>
+#include <quill/LogMacros.h>
+#include <quill/Logger.h>
+#include <quill/sinks/ConsoleSink.h>
+
 #include <libiw4x/version.hxx>
 #include <libiw4x/options.hxx>
 
@@ -17,6 +23,8 @@ using namespace std;
 
 namespace iw4x
 {
+  quill::Logger* log (nullptr);
+
   namespace
   {
     void
@@ -183,7 +191,18 @@ namespace iw4x
           exit (1);
         }
 
-        // Parse command-line interface
+        // Start the logging backend ahead of command-line parsing so the sink
+        // is ready when verbosity flags are handled (see below).
+        //
+        quill::Backend::start ();
+        log = quill::Frontend::create_or_get_logger (
+          "root",
+          quill::Frontend::create_or_get_sink<quill::ConsoleSink> ("iw4x"),
+          quill::PatternFormatterOptions {
+            "[%(caller_function)] %(log_level_short_code):  %(message)"},
+            quill::ClockSourceType::System);
+
+        // Parse command-line interface.
         //
         try
         {
@@ -201,10 +220,10 @@ namespace iw4x
 
           switch (clamp (verb, uint16_t (0), uint16_t (3)))
           {
-            case 0: break;
-            case 1: break;
-            case 2: break;
-            case 3: break;
+            case 0: log->set_log_level (quill::LogLevel::Error);   break;
+            case 1: log->set_log_level (quill::LogLevel::TraceL1); break;
+            case 2: log->set_log_level (quill::LogLevel::TraceL2); break;
+            case 3: log->set_log_level (quill::LogLevel::TraceL3); break;
           }
         }
         catch (const cli::exception& e)
