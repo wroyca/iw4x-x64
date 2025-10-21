@@ -1,0 +1,3 @@
+import libs = libiw4x-steam%lib{iw4x-steam}
+
+exe{driver}: {hxx ixx txx cxx}{**} $libs testscript{**}

@@ -1,0 +1,7 @@
+project = libiw4x-steam
+
+using version
+using config
+using test
+using install
+using dist
