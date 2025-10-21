@@ -1,0 +1,3 @@
+import libs = libiw4x-discord%lib{iw4x-discord}
+
+exe{driver}: {hxx ixx txx cxx}{**} $libs testscript{**}
