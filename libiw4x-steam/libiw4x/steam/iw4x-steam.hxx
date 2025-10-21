@@ -5,11 +5,14 @@
 
 #include <libiw4x/steam/export.hxx>
 
-namespace iw4x_steam
+namespace iw4x
 {
-  // Print a greeting for the specified name into the specified
-  // stream. Throw std::invalid_argument if the name is empty.
-  //
-  LIBIW4X_STEAM_SYMEXPORT void
-  say_hello (std::ostream&, const std::string& name);
+  namespace steam
+  {
+    // Print a greeting for the specified name into the specified
+    // stream. Throw std::invalid_argument if the name is empty.
+    //
+    LIBIW4X_STEAM_SYMEXPORT void
+    say_hello (std::ostream&, const std::string& name);
+  }
 }
