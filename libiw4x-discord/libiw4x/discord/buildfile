@@ -1,8 +1,9 @@
 intf_libs = # Interface dependencies.
 impl_libs = # Implementation dependencies.
-#import xxxx_libs += libhello%lib{hello}
 
-lib{iw4x-discord}: {hxx ixx txx cxx}{** -version} hxx{version} $impl_libs $intf_libs
+lib{iw4x-discord}: {hxx ixx txx cxx}{** -version} \
+                   {hxx            }{    version} \
+                   $impl_libs $intf_libs
 
 hxx{version}: in{version} $src_root/manifest
 
