@@ -3,6 +3,8 @@
 #include <ostream>
 #include <stdexcept>
 
+#include <discordpp.h>
+
 using namespace std;
 
 namespace iw4x

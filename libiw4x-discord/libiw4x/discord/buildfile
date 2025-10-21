@@ -7,18 +7,47 @@ lib{iw4x-discord}: {hxx ixx txx cxx}{** -version} \
 
 hxx{version}: in{version} $src_root/manifest
 
+# Discord SDK unpackaged dependency
+#
+discord_sdk_root = $src_root/../upstream/discord_social_sdk
+
 # Build options.
 #
-cxx.poptions =+ "-I$out_root" "-I$src_root"
+cxx.poptions =+ "-I$out_root" "-I$src_root" \
+                "-I$discord_sdk_root/include"
 
 obja{*}: cxx.poptions += -DLIBIW4X_DISCORD_STATIC_BUILD
 objs{*}: cxx.poptions += -DLIBIW4X_DISCORD_SHARED_BUILD
+
+if ($cxx.id == 'msvc')
+{
+  lib{iw4x}: cxx.loptions += "/LIBPATH:$discord_sdk_root/lib/release"
+
+  lib{iw4x}: cxx.libs += discord_partner_sdk.lib
+  lib{iw4x}: cxx.libs += wininet.lib
+
+  lib{iw4x}: cxx.export.libs += discord_partner_sdk.lib
+  lib{iw4x}: cxx.export.libs += wininet.lib
+}
+
+if ($cxx.class == 'gcc' && $cxx.target.system == 'mingw32')
+{
+  lib{iw4x}: cxx.loptions += "-L$discord_sdk_root/lib/release"
+
+  lib{iw4x}: cxx.libs += -ldiscord_partner_sdk
+  lib{iw4x}: cxx.libs += -lwininet
+
+  lib{iw4x}: cxx.export.libs += -ldiscord_partner_sdk
+  lib{iw4x}: cxx.export.libs += -lwininet
+}
 
 # Export options.
 #
 lib{iw4x-discord}:
 {
-  cxx.export.poptions = "-I$out_root" "-I$src_root"
+  cxx.export.poptions = "-I$out_root" "-I$src_root" \
+                        "-I$discord_sdk_root/include"
+
   cxx.export.libs = $intf_libs
 }
 
