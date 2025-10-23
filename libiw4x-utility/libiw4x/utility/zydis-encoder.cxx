@@ -55,12 +55,12 @@ namespace iw4x
           case encoder::condition::ne: return ZYDIS_MNEMONIC_JNZ;
           case encoder::condition::l:  return ZYDIS_MNEMONIC_JL;
           case encoder::condition::le: return ZYDIS_MNEMONIC_JLE;
-          case encoder::condition::g:  return ZYDIS_MNEMONIC_JNLE;  // Alias: JG
-          case encoder::condition::ge: return ZYDIS_MNEMONIC_JNL;   // Alias: JGE
+          case encoder::condition::g:  return ZYDIS_MNEMONIC_JNLE;
+          case encoder::condition::ge: return ZYDIS_MNEMONIC_JNL;
           case encoder::condition::b:  return ZYDIS_MNEMONIC_JB;
           case encoder::condition::be: return ZYDIS_MNEMONIC_JBE;
-          case encoder::condition::a:  return ZYDIS_MNEMONIC_JNBE;  // Alias: JA
-          case encoder::condition::ae: return ZYDIS_MNEMONIC_JNB;   // Alias: JAE
+          case encoder::condition::a:  return ZYDIS_MNEMONIC_JNBE;
+          case encoder::condition::ae: return ZYDIS_MNEMONIC_JNB;
           default: return ZYDIS_MNEMONIC_INVALID;
         }
       }
@@ -96,54 +96,55 @@ namespace iw4x
     // Encoder
     //
 
-    template <typename Self, typename F>
-    encoder encoder::
-    encode (this Self&& self, F&& setup)
+    encoder
+    encoder::encode (this auto&& s, auto&& c)
     {
-      ZydisEncoderRequest req;
-      memset (&req, 0, sizeof (req));
-      req.machine_mode = ZYDIS_MACHINE_MODE_LONG_64;
+      ZydisEncoderRequest r {};
+      r.machine_mode = ZYDIS_MACHINE_MODE_LONG_64;
 
       // Let caller configure the request.
       //
-      setup (req);
+      c (r);
 
       // Encode instruction.
       //
-      std::array<uint8_t, ZYDIS_MAX_INSTRUCTION_LENGTH> buffer;
-      size_t length (buffer.size ());
+      ZyanU8 b [ZYDIS_MAX_INSTRUCTION_LENGTH];
+      ZyanUSize l (sizeof (b));
 
-      if (ZYAN_FAILED (ZydisEncoderEncodeInstruction (&req, buffer.data (), &length)))
-        throw runtime_error ("Zydis encoding failed");
+      if (ZYAN_FAILED (ZydisEncoderEncodeInstruction (&r, b, &l)))
+        throw runtime_error ("unable to encode instruction");
 
-      // Append to code using transient as transactional.
+      // Append encoded bytes to code buffer.
       //
-      auto t (std::forward<Self> (self).code_.transient ());
-      for (size_t i (0); i < length; ++i)
-        t.push_back (buffer[i]);
+      auto t (std::forward<decltype(s)> (s).code_.transient ());
+      for (size_t i (0); i < l; ++i)
+        t.push_back (b[i]);
+
+      encoder result;
+      result.code_ = t.persistent ();
+      return result;
+    }
+
+    encoder
+    encoder::append (this auto&& s, auto... instruction)
+    {
+      auto t (forward<decltype (s)> (s).code_.transient ());
+      {
+        (
+          t.push_back (instruction),
+          ...
+        );
+      }
 
       encoder r;
       r.code_ = t.persistent ();
       return r;
     }
 
-    template <typename Self, typename... Ts>
-    encoder encoder::
-    append (this Self&& self, Ts... bs)
+    encoder
+    encoder::jmp (this auto&& s, uint64_t t)
     {
-      auto t (std::forward<Self> (self).code_.transient ());
-      (t.push_back (bs), ...);
-
-      encoder r;
-      r.code_ = t.persistent ();
-      return r;
-    }
-
-    template <typename Self>
-    encoder encoder::
-    jmp (this Self&& self, uint64_t target)
-    {
-      auto enc (std::forward<Self> (self).encode ([](ZydisEncoderRequest& req)
+      auto e (forward<decltype(s)> (s).encode ([](ZydisEncoderRequest& req)
       {
         req.mnemonic = ZYDIS_MNEMONIC_JMP;
         req.operand_count = 1;
@@ -153,46 +154,40 @@ namespace iw4x
         req.operands[0].mem.size = 8;
       }));
 
-      uint64_t target_le (boost::endian::native_to_little (target));
-      uint8_t* bytes (reinterpret_cast<uint8_t*> (&target_le));
+      auto l (boost::endian::native_to_little (t));
+      auto b (reinterpret_cast<uint8_t*> (&l));
 
-      return move (enc).append (
-        bytes[0], bytes[1], bytes[2], bytes[3],
-        bytes[4], bytes[5], bytes[6], bytes[7]
-      );
+      return move (e).append (b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7]);
     }
 
-    template <typename Self>
     encoder encoder::
-    jmp_rel (this Self&& self, int32_t offset)
+    jmp_rel (this auto&& s, int32_t o)
     {
-      return std::forward<Self> (self).encode ([offset](ZydisEncoderRequest& req)
+      return forward<decltype(s)> (s).encode ([o](ZydisEncoderRequest& req)
       {
         req.mnemonic = ZYDIS_MNEMONIC_JMP;
         req.operand_count = 1;
         req.operands[0].type = ZYDIS_OPERAND_TYPE_IMMEDIATE;
-        req.operands[0].imm.s = offset;
+        req.operands[0].imm.s = o;
       });
     }
 
-    template <typename Self>
     encoder encoder::
-    jcc (this Self&& self, condition cond, int32_t offset)
+    jcc (this auto&& s, condition c, int32_t o)
     {
-      return std::forward<Self> (self).encode ([cond, offset](ZydisEncoderRequest& req)
+      return forward<decltype(s)> (s).encode ([c, o](ZydisEncoderRequest& req)
       {
-        req.mnemonic = condition_to_mnemonic (cond);
+        req.mnemonic = condition_to_mnemonic (c);
         req.operand_count = 1;
         req.operands[0].type = ZYDIS_OPERAND_TYPE_IMMEDIATE;
-        req.operands[0].imm.s = offset;
+        req.operands[0].imm.s = o;
       });
     }
 
-    template <typename Self>
     encoder encoder::
-    call (this Self&& self, uint64_t target)
+    call (this auto&& s, uint64_t t)
     {
-      auto enc (std::forward<Self> (self).encode ([](ZydisEncoderRequest& req)
+      auto e (forward<decltype(s)> (s).encode ([](ZydisEncoderRequest& req)
       {
         req.mnemonic = ZYDIS_MNEMONIC_CALL;
         req.operand_count = 1;
@@ -202,46 +197,40 @@ namespace iw4x
         req.operands[0].mem.size = 8;
       }));
 
-      uint64_t target_le (boost::endian::native_to_little (target));
-      uint8_t* bytes (reinterpret_cast<uint8_t*> (&target_le));
+      auto l (boost::endian::native_to_little (t));
+      auto b (reinterpret_cast<uint8_t*> (&l));
 
-      return move (enc).append (
-        bytes[0], bytes[1], bytes[2], bytes[3],
-        bytes[4], bytes[5], bytes[6], bytes[7]
-      );
+      return move (e).append (b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7]);
     }
 
-    template <typename Self>
     encoder encoder::
-    call_rel (this Self&& self, int32_t offset)
+    call_rel (this auto&& s, int32_t o)
     {
-      return std::forward<Self> (self).encode ([offset](ZydisEncoderRequest& req)
+      return forward<decltype(s)> (s).encode ([o](ZydisEncoderRequest& req)
       {
         req.mnemonic = ZYDIS_MNEMONIC_CALL;
         req.operand_count = 1;
         req.operands[0].type = ZYDIS_OPERAND_TYPE_IMMEDIATE;
-        req.operands[0].imm.s = offset;
+        req.operands[0].imm.s = o;
       });
     }
 
-    template <typename Self>
     encoder encoder::
-    push (this Self&& self, reg64 r)
+    push (this auto&& s, reg64 re)
     {
-      return std::forward<Self> (self).encode ([r](ZydisEncoderRequest& req)
+      return forward<decltype(s)> (s).encode ([re](ZydisEncoderRequest& req)
       {
         req.mnemonic = ZYDIS_MNEMONIC_PUSH;
         req.operand_count = 1;
         req.operands[0].type = ZYDIS_OPERAND_TYPE_REGISTER;
-        req.operands[0].reg.value = reg64_to_zydis (r);
+        req.operands[0].reg.value = reg64_to_zydis (re);
       });
     }
 
-    template <typename Self>
     encoder encoder::
-    pop (this Self&& self, reg64 r)
+    pop (this auto&& s, reg64 r)
     {
-      return std::forward<Self> (self).encode ([r](ZydisEncoderRequest& req)
+      return forward<s> (s).encode ([r](ZydisEncoderRequest& req)
       {
         req.mnemonic = ZYDIS_MNEMONIC_POP;
         req.operand_count = 1;
@@ -250,39 +239,36 @@ namespace iw4x
       });
     }
 
-    template <typename Self>
     encoder encoder::
-    mov (this Self&& self, reg64 dst, uint64_t imm)
+    mov (this auto&& s, reg64 r, uint64_t i)
     {
-      return std::forward<Self> (self).encode ([dst, imm](ZydisEncoderRequest& req)
+      return forward<delctype(s)> (s).encode ([r, i](ZydisEncoderRequest& req)
       {
         req.mnemonic = ZYDIS_MNEMONIC_MOV;
         req.operand_count = 2;
         req.operands[0].type = ZYDIS_OPERAND_TYPE_REGISTER;
-        req.operands[0].reg.value = reg64_to_zydis (dst);
+        req.operands[0].reg.value = reg64_to_zydis (r);
         req.operands[1].type = ZYDIS_OPERAND_TYPE_IMMEDIATE;
-        req.operands[1].imm.u = imm;
+        req.operands[1].imm.u = i;
       });
     }
 
-    template <typename Self>
     encoder encoder::
-    nop (this Self&& self)
+    nop (this auto&& s)
     {
-      return std::forward<Self> (self).append (0x90);
+      return forward<delctype(s)> (s).append (0x90);
     }
 
-    template <typename Self>
     encoder encoder::
-    nop (this Self&& self, size_t n)
+    nop (this auto&& s, size_t n)
     {
       if (n == 0)
-        return std::forward<Self> (self);
+        return forward<decltype(s)> (s);
 
       if (n > 9)
         throw runtime_error ("NOP size exceeds maximum (9 bytes)");
 
-      auto t (std::forward<Self> (self).code_.transient ());
+      auto t (forward<decltype(s)> (s).code_.transient ());
       const auto& seq (nop_sequences[n - 1]);
 
       for (size_t i (0); i < n; ++i)
@@ -293,18 +279,16 @@ namespace iw4x
       return r;
     }
 
-    template <typename Self>
     encoder encoder::
-    ret (this Self&& self)
+    ret (this auto&& s)
     {
-      return std::forward<Self> (self).append (0xC3);
+      return forward<decltype(s)> (s).append (0xC3);
     }
 
-    template <typename Self>
     encoder encoder::
-    ret (this Self&& self, uint16_t n)
+    ret (this auto&& s, uint16_t n)
     {
-      return std::forward<Self> (self).encode ([n](ZydisEncoderRequest& req)
+      return forward<decltype(s)> (s).encode ([n](ZydisEncoderRequest& req)
       {
         req.mnemonic = ZYDIS_MNEMONIC_RET;
         req.operand_count = 1;
@@ -313,11 +297,10 @@ namespace iw4x
       });
     }
 
-    template <typename Self>
     encoder encoder::
-    int3 (this Self&& self)
+    int3 (this auto&& s)
     {
-      return std::forward<Self> (self).append (0xCC);
+      return forward<decltype(s)> (s).append (0xCC);
     }
 
     encoder::bytes encoder::

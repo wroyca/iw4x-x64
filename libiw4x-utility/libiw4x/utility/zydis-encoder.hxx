@@ -28,15 +28,13 @@ namespace iw4x
 
       // Absolute jump (rip-relative memory indirect).
       //
-      template <typename Self>
       [[nodiscard]] encoder
-      jmp (this Self&& self, std::uint64_t target);
+      jmp (this auto&& self, std::uint64_t target);
 
       // Relative jump (signed 32-bit offset).
       //
-      template <typename Self>
       [[nodiscard]] encoder
-      jmp_rel (this Self&& self, std::int32_t offset);
+      jmp_rel (this auto&& self, std::int32_t offset);
 
       // Conditional jump (relative, signed 32-bit offset).
       //
@@ -54,21 +52,18 @@ namespace iw4x
         ae   // above or equal (unsigned)
       };
 
-      template <typename Self>
       [[nodiscard]] encoder
-      jcc (this Self&& self, condition cond, std::int32_t offset);
+      jcc (this auto&& self, condition cond, std::int32_t offset);
 
       // Call instruction (absolute address via rip-relative).
       //
-      template <typename Self>
       [[nodiscard]] encoder
-      call (this Self&& self, std::uint64_t target);
+      call (this auto&& self, std::uint64_t target);
 
       // Call instruction (relative offset).
       //
-      template <typename Self>
       [[nodiscard]] encoder
-      call_rel (this Self&& self, std::int32_t offset);
+      call_rel (this auto&& self, std::int32_t offset);
 
       // Push register.
       //
@@ -78,51 +73,43 @@ namespace iw4x
         r8, r9, r10, r11, r12, r13, r14, r15
       };
 
-      template <typename Self>
       [[nodiscard]] encoder
-      push (this Self&& self, reg64 r);
+      push (this auto&& self, reg64 r);
 
       // Pop register.
       //
-      template <typename Self>
       [[nodiscard]] encoder
-      pop (this Self&& self, reg64 r);
+      pop (this auto&& self, reg64 r);
 
       // Move immediate to register.
       //
-      template <typename Self>
       [[nodiscard]] encoder
-      mov (this Self&& self, reg64 dst, std::uint64_t imm);
+      mov (this auto&& self, reg64 dst, std::uint64_t imm);
 
       // Single-byte NOP.
       //
-      template <typename Self>
       [[nodiscard]] encoder
-      nop (this Self&& self);
+      nop (this auto&& self);
 
       // Multi-byte NOP (1-9 bytes, Intel-recommended sequences).
       //
-      template <typename Self>
       [[nodiscard]] encoder
-      nop (this Self&& self, std::size_t n);
+      nop (this auto&& self, std::size_t n);
 
       // Near return.
       //
-      template <typename Self>
       [[nodiscard]] encoder
-      ret (this Self&& self);
+      ret (this auto&& self);
 
       // Return with immediate (pop n bytes).
       //
-      template <typename Self>
       [[nodiscard]] encoder
-      ret (this Self&& self, std::uint16_t n);
+      ret (this auto&& self, std::uint16_t n);
 
       // Interrupt.
       //
-      template <typename Self>
       [[nodiscard]] encoder
-      int3 (this Self&& self);
+      int3 (this auto&& self);
 
       // Emit all instructions as flat byte sequence.
       //
@@ -149,15 +136,13 @@ namespace iw4x
 
       // Encode single instruction.
       //
-      template <typename Self, typename F>
       [[nodiscard]] encoder
-      encode (this Self&& self, F&& setup);
+      encode (this auto&& self, auto&& callback);
 
       // Append instruction to encoder sequence.
       //
-      template <typename Self, typename... Ts>
       [[nodiscard]] encoder
-      append (this Self&& self, Ts... bs);
+      append (this auto&& self, auto... instruction);
     };
 
     // Write encoded instructions to memory.
