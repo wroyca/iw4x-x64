@@ -1,6 +1,6 @@
 cxx.internal.scope = current
 
-cxx.std = latest
+cxx.std = c++20
 
 using cxx
 

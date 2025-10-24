@@ -1,8 +1,6 @@
-# Uncomment to suppress warnings coming from external libraries.
-#
-#cxx.internal.scope = current
+cxx.internal.scope = current
 
-cxx.std = latest
+cxx.std = c++20
 
 using cxx
 
