@@ -1,6 +1,9 @@
 intf_libs = # Interface dependencies.
 impl_libs = # Implementation dependencies.
 
+import intf_libs += libzydis%lib{zydis}
+import intf_libs += libimmer%lib{immer}
+
 lib{iw4x-utility}: {hxx ixx txx cxx}{** -version} \
                    {hxx            }{    version} \
                    $impl_libs $intf_libs
