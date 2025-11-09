@@ -65,8 +65,8 @@
     #define HDE_DISASM(code, hs) hde32_disasm(code, hs)
 #endif
 
-#include <libiw4x/utility/minhook/trampoline.h>
-#include <libiw4x/utility/minhook/buffer.h>
+#include <libiw4x/utility/minhook/minhook-trampoline.h>
+#include <libiw4x/utility/minhook/minhook-buffer.h>
 
 // Maximum size of a trampoline function.
 #if defined(_M_X64) || defined(__x86_64__)

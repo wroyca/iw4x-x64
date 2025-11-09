@@ -52,9 +52,9 @@
 
 #include <limits.h>
 
-#include <libiw4x/utility/minhook/hook.h>
-#include <libiw4x/utility/minhook/buffer.h>
-#include <libiw4x/utility/minhook/trampoline.h>
+#include <libiw4x/utility/minhook/minhook.h>
+#include <libiw4x/utility/minhook/minhook-buffer.h>
+#include <libiw4x/utility/minhook/minhook-trampoline.h>
 
 #ifndef ARRAYSIZE
     #define ARRAYSIZE(A) (sizeof(A)/sizeof((A)[0]))

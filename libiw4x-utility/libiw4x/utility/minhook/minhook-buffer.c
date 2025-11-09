@@ -46,7 +46,7 @@
 #  endif
 #endif
 
-#include <libiw4x/utility/minhook/buffer.h>
+#include <libiw4x/utility/minhook/minhook-buffer.h>
 
 // Size of each memory block. (= page size of VirtualAlloc)
 #define MEMORY_BLOCK_SIZE 0x1000
