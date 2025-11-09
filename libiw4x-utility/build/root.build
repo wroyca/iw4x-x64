@@ -3,6 +3,10 @@ cxx.internal.scope = current
 cxx.std = c++11
 
 using cxx
+using c
+
+c{*}: extension = c
+h{*}: extension = h
 
 hxx{*}: extension = hxx
 ixx{*}: extension = ixx
