@@ -87,5 +87,11 @@ namespace iw4x
 
       return r;
     }
+
+    void*
+    memset (uintptr_t dst, int v, size_t n)
+    {
+      return memset (reinterpret_cast<void*> (dst), v, n);
+    }
   }
 }
