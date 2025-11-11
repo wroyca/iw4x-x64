@@ -1,6 +1,8 @@
 intf_libs = # Interface dependencies.
 impl_libs = # Implementation dependencies.
 
+import intf_libs += xxhash%lib{xxhash}
+
 lib{iw4x-utility}: {h c                }{**         } \
                    {    hxx ixx txx cxx}{** -version} \
                    {    hxx            }{    version} \
