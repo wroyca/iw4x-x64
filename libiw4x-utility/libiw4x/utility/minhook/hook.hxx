@@ -1,5 +1,6 @@
 #pragma once
 
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <stdexcept>
@@ -15,6 +16,11 @@ namespace iw4x
   {
     namespace minhook
     {
+      // Concept for function pointer types.
+      //
+      template <typename T>
+      concept fp = std::is_function_v<std::remove_pointer_t<T>>;
+
       // MinHook status codes wrapped as an enum class.
       //
       enum class status: int
@@ -80,6 +86,17 @@ namespace iw4x
               uintptr_t detour,
               activation mode = activation::immediate);
 
+      inline void*
+      create (fp auto target,
+              fp auto detour,
+              activation mode = activation::immediate)
+      {
+        void* t = reinterpret_cast<void*> (target);
+        void* d = reinterpret_cast<void*> (detour);
+
+        return create (t, d, mode);
+      }
+
       LIBIW4X_UTILITY_SYMEXPORT void*
       create (const wchar_t* module,
               const char* function,
@@ -91,6 +108,17 @@ namespace iw4x
               const char* function,
               uintptr_t detour,
               activation mode = activation::immediate);
+
+      inline void*
+      create (const wchar_t* module,
+              const char* function,
+              fp auto detour,
+              activation mode = activation::immediate)
+      {
+        void* d = reinterpret_cast<void*> (detour);
+
+        return create (module, function, d, mode);
+      }
 
       LIBIW4X_UTILITY_SYMEXPORT void*
       create (const wchar_t* module,
@@ -105,6 +133,18 @@ namespace iw4x
               uintptr_t detour,
               void*& target,
               activation mode = activation::immediate);
+
+      inline void*
+      create (const wchar_t* module,
+              const char* function,
+              fp auto detour,
+              void*& target,
+              activation mode = activation::immediate)
+      {
+        void* d = reinterpret_cast<void*> (d);
+
+        return create (module, function, d, target, mode);
+      }
 
       LIBIW4X_UTILITY_SYMEXPORT void
       disable (void* target);
