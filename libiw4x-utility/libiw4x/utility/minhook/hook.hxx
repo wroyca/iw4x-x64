@@ -76,74 +76,22 @@ namespace iw4x
       LIBIW4X_UTILITY_SYMEXPORT void
       uninitialize () noexcept;
 
-      LIBIW4X_UTILITY_SYMEXPORT void*
-      create (void* target,
+      LIBIW4X_UTILITY_SYMEXPORT void
+      create (void*& target,
               void* detour,
               activation mode = activation::immediate);
 
-      LIBIW4X_UTILITY_SYMEXPORT void*
-      create (uintptr_t target,
-              uintptr_t detour,
-              activation mode = activation::immediate);
-
-      inline void*
-      create (fp auto target,
+      inline void
+      create (fp auto& target,
               fp auto detour,
               activation mode = activation::immediate)
       {
         void* t = reinterpret_cast<void*> (target);
         void* d = reinterpret_cast<void*> (detour);
 
-        return create (t, d, mode);
-      }
+        create (t, d, mode);
 
-      LIBIW4X_UTILITY_SYMEXPORT void*
-      create (const wchar_t* module,
-              const char* function,
-              void* detour,
-              activation mode = activation::immediate);
-
-      LIBIW4X_UTILITY_SYMEXPORT void*
-      create (const wchar_t* module,
-              const char* function,
-              uintptr_t detour,
-              activation mode = activation::immediate);
-
-      inline void*
-      create (const wchar_t* module,
-              const char* function,
-              fp auto detour,
-              activation mode = activation::immediate)
-      {
-        void* d = reinterpret_cast<void*> (detour);
-
-        return create (module, function, d, mode);
-      }
-
-      LIBIW4X_UTILITY_SYMEXPORT void*
-      create (const wchar_t* module,
-              const char* function,
-              void* detour,
-              void*& target,
-              activation mode = activation::immediate);
-
-      LIBIW4X_UTILITY_SYMEXPORT void*
-      create (const wchar_t* module,
-              const char* function,
-              uintptr_t detour,
-              void*& target,
-              activation mode = activation::immediate);
-
-      inline void*
-      create (const wchar_t* module,
-              const char* function,
-              fp auto detour,
-              void*& target,
-              activation mode = activation::immediate)
-      {
-        void* d = reinterpret_cast<void*> (d);
-
-        return create (module, function, d, target, mode);
+        target = reinterpret_cast<decltype (target)> (t);
       }
 
       LIBIW4X_UTILITY_SYMEXPORT void

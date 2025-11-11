@@ -70,8 +70,8 @@ namespace iw4x
         });
       }
 
-      void*
-      create (void* target, void* detour, activation mode)
+      void
+      create (void*& target, void* detour, activation mode)
       {
         LPVOID o (nullptr);
 
@@ -82,80 +82,7 @@ namespace iw4x
         else
           check_status (MH_EnableHook (target));
 
-        return o;
-      }
-
-      void*
-      create (uintptr_t target, uintptr_t detour, activation mode)
-      {
-        void* t (reinterpret_cast<void*> (target));
-        void* d (reinterpret_cast<void*> (detour));
-
-        return create (t, d, mode);
-      }
-
-      void*
-      create (const wchar_t* module,
-              const char* function,
-              void* detour,
-              activation mode)
-      {
-        LPVOID o (nullptr);
-        LPVOID t (nullptr);
-
-        check_status (MH_CreateHookApiEx (module, function, detour, &o, &t));
-
-        if (mode == activation::queued)
-          check_status (MH_QueueEnableHook (t));
-        else
-          check_status (MH_EnableHook (t));
-
-        return o;
-      }
-
-      void*
-      create (const wchar_t* module,
-              const char* function,
-              uintptr_t detour,
-              activation mode)
-      {
-        void* d (reinterpret_cast<void*> (detour));
-
-        return create (module, function, d, mode);
-      }
-
-      void*
-      create (const wchar_t* module,
-              const char* function,
-              void* detour,
-              void*& target,
-              activation mode)
-      {
-        LPVOID o (nullptr);
-        LPVOID t (nullptr);
-
-        check_status (MH_CreateHookApiEx (module, function, detour, &o, &t));
-
-        target = t;
-
-        if (mode == activation::queued)
-          check_status (MH_QueueEnableHook (t));
-        else
-          check_status (MH_EnableHook (t));
-
-        return o;
-      }
-
-      void*
-      create (const wchar_t* module,
-              const char* function,
-              uintptr_t detour,
-              void*& target,
-              activation mode)
-      {
-        void* d (reinterpret_cast<void*> (detour));
-
-        return create (module, function, d, target, mode);
+        target = o;
       }
 
       void
