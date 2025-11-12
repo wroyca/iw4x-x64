@@ -15,6 +15,7 @@ extern "C"
 #include <libiw4x/utility/scheduler.hxx>
 
 #include <libiw4x/component/frame.hxx>
+#include <libiw4x/component/menu.hxx>
 
 using namespace std;
 using namespace iw4x::utility;
@@ -257,8 +258,9 @@ namespace iw4x
         // Subsystem initialization
         //
         minhook::initialize();
-        scheduler s;
-        frame f (s);
+        scheduler scheduler;
+        frame frame (scheduler);
+        menu menu (scheduler);
 
         // __scrt_common_main_seh
         //
