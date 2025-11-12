@@ -1,7 +1,5 @@
 #include <libiw4x/utility/xxhash.hxx>
 
-#include <cstring>
-
 #include <xxhash.h>
 
 using namespace std;
@@ -10,9 +8,6 @@ namespace iw4x
 {
   namespace utility
   {
-    // Free functions
-    //
-
     uint64_t
     xxh64 (const string& in)
     {
@@ -26,15 +21,15 @@ namespace iw4x
     }
 
     uint64_t
-    xxh64 (const void* in, size_t len)
+    xxh64 (span<const byte> in)
     {
-      return XXH64 (in, len, 0);
+      return XXH64 (in.data (), in.size (), 0);
     }
 
     uint64_t
-    xxh64 (const void* in, size_t len, uint64_t s)
+    xxh64 (span<const byte> in, uint64_t s)
     {
-      return XXH64 (in, len, s);
+      return XXH64 (in.data (), in.size (), s);
     }
 
     // xxh64_hasher
@@ -95,9 +90,9 @@ namespace iw4x
     }
 
     void xxh64_hasher::
-    update (const void* in, size_t len)
+    update (span<const byte> in)
     {
-      XXH64_update (state_->st, in, len);
+      XXH64_update (state_->st, in.data (), in.size ());
     }
 
     uint64_t xxh64_hasher::
