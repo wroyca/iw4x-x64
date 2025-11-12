@@ -1,4 +1,4 @@
-cxx.std = c++11
+cxx.std = latest
 
 using cxx
 

@@ -14,4 +14,4 @@ builds: -32 ; 64-bit targets only
 builds: -clang ; clang is not supported
 depends: * build2 >= 0.18.0-
 depends: * bpkg >= 0.18.0-
-depends: xxhash ^0.8.1
+depends: xxhash >= 0.8.1
