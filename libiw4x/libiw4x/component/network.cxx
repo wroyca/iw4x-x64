@@ -31,12 +31,52 @@ namespace iw4x
     };
 
     socket_state st;
+
+    int
+    net_send_packet (size_t n, const char* b, netadr_t* a)
+    {
+      try
+      {
+        SOCKET s (*st.ip);
+
+        if (s == INVALID_SOCKET || s == 0)
+          throw runtime_error ("invalid socket");
+
+        // IW4 always stores four octets in ip[] and keeps port in network byte
+        // order.
+        //
+        sockaddr_in sa;
+        sa.sin_family = AF_INET;
+        memcpy (&sa.sin_addr, a->ip, 4);
+        sa.sin_port = a->port;
+
+        int r (sendto (s,
+                       b,
+                       static_cast<int> (n),
+                       0,
+                       (sockaddr*) (&sa),
+                       sizeof (sockaddr_in)));
+
+        if (r == SOCKET_ERROR)
+          throw runtime_error (format_message (WSAGetLastError ()));
+
+        cout << "sent " << r << " bytes" << endl;
+        return true;
+      }
+      catch (const exception& e)
+      {
+        cerr << "error:" << e.what () << endl;
+        exit (1);
+      }
+    }
   }
 
   network::
   network (scheduler& s)
   {
     sched = &s;
+
+    minhook::create (NET_SendPacket, &net_send_packet);
 
     try
     {
