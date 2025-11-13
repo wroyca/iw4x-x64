@@ -16,3 +16,4 @@ depends: * build2 >= 0.18.0-
 depends: * bpkg >= 0.18.0-
 depends: libiw4x-utility == $
 depends: libboost-stacktrace >= 1.87.0
+depends: * nasm ^ 2.16.3
