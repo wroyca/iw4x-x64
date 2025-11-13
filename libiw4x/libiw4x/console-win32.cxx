@@ -1,6 +1,4 @@
 #include <libiw4x/console-win32.hxx>
-#include <libiw4x/component/party.hxx>
-#include <libiw4x/symbol.hxx>
 
 #include <algorithm>
 #include <array>
@@ -11,7 +9,10 @@
 #include <thread>
 #include <utility>
 
+#include <libiw4x/symbol.hxx>
+
 #include <libiw4x/component/network.hxx>
+#include <libiw4x/component/party.hxx>
 
 using namespace std;
 

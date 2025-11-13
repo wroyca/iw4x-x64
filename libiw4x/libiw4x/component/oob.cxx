@@ -5,8 +5,9 @@
 #include <iostream>
 #include <utility>
 
-#include <libiw4x/utility/utility-win32.hxx>
 #include <libiw4x/types.hxx>
+
+#include <libiw4x/utility/utility-win32.hxx>
 
 using namespace std;
 using namespace iw4x::utility;

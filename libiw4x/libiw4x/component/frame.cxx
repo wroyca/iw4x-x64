@@ -1,8 +1,8 @@
 #include <libiw4x/component/frame.hxx>
 
-#include <libiw4x/utility/minhook/hook.hxx>
-
 #include <libiw4x/symbol.hxx>
+
+#include <libiw4x/utility/minhook/hook.hxx>
 
 using namespace std;
 using namespace iw4x::utility;

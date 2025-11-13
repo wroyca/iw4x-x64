@@ -3,6 +3,8 @@
 #include <libiw4x/database.hxx>
 #include <libiw4x/types.hxx>
 
+#include <libiw4x/export.hxx>
+
 namespace iw4x
 {
   using  Com_Frame_Try_Block_Function_t = void (*) ();

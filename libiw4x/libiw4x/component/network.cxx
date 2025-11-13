@@ -4,6 +4,7 @@
 
 #include <libiw4x/symbol.hxx>
 #include <libiw4x/types.hxx>
+
 #include <libiw4x/utility/minhook/hook.hxx>
 #include <libiw4x/utility/utility-win32.hxx>
 
