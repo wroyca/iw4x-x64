@@ -1,5 +1,7 @@
 #pragma once
 
+#include <libiw4x/utility/utility-win32.hxx>
+
 // 29
 //
 enum netsrc_t
@@ -23,6 +25,17 @@ enum netadrtype_t
   NA_BROADCAST_IPX = 0x6,
 };
 
+// 1015
+struct XNADDR
+{
+  in_addr ina;
+  in_addr inaOnline;
+  unsigned short wPort;
+  unsigned short wPortOnline;
+  char abEnet[4];
+  char abOnline[20];
+};
+
 // 1315
 //
 struct netadr_t
@@ -31,6 +44,26 @@ struct netadr_t
   char ip[4];
   unsigned short port;
   char ipx[10];
+};
+
+// 1362
+struct XNKID
+{
+  char ab[8];
+};
+
+// 1363
+struct XNKEY
+{
+  char ab[16];
+};
+
+// 1364
+struct XSESSION_INFO
+{
+  XNKID sessionID;
+  XNADDR hostAddress;
+  XNKEY keyExchangeKey;
 };
 
 // 1474
