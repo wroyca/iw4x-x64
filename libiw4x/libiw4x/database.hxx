@@ -443,6 +443,23 @@ enum DynEntityType
   DYNENT_TYPE_COUNT = 0x3,
 };
 
+// 366
+//
+enum dvarType
+{
+  DVAR_TYPE_BOOL = 0x0,
+  DVAR_TYPE_FLOAT = 0x1,
+  DVAR_TYPE_FLOAT_2 = 0x2,
+  DVAR_TYPE_FLOAT_3 = 0x3,
+  DVAR_TYPE_FLOAT_4 = 0x4,
+  DVAR_TYPE_INT = 0x5,
+  DVAR_TYPE_ENUM = 0x6,
+  DVAR_TYPE_STRING = 0x7,
+  DVAR_TYPE_COLOR = 0x8,
+  DVAR_TYPE_FLOAT_3_COLOR = 0x9,
+  DVAR_TYPE_COUNT = 0xA,
+};
+
 // 368
 //
 enum StructuredDataTypeCategory
@@ -700,7 +717,7 @@ struct dvar_t
   const char *name;
   const char *description;
   unsigned int flags;
-  char type;
+  dvarType type;
   bool modified;
   DvarValue current;
   DvarValue latched;
