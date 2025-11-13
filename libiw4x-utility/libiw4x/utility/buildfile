@@ -17,13 +17,22 @@ cc.poptions =+ "-I$out_root" "-I$src_root"
 obja{*}: cc.poptions += -DLIBIW4X_UTILITY_STATIC_BUILD
 objs{*}: cc.poptions += -DLIBIW4X_UTILITY_SHARED_BUILD
 
+ws2_32 =
+if ($cxx.target.system == 'mingw32')
+  ws2_32 += -lws2_32
+else
+  ws2_32 += ws2_32.lib
+
+
 # Export options.
 #
 lib{iw4x-utility}: bin.lib.prefix = "lib"
 lib{iw4x-utility}:
 {
+  cxx.libs += $ws2_32
+
   cc.export.poptions = "-I$out_root" "-I$src_root"
-  cc.export.libs = $intf_libs
+  cc.export.libs = $intf_libs $ws2_32
 }
 
 liba{iw4x-utility}: cc.export.poptions += -DLIBIW4X_UTILITY_STATIC
