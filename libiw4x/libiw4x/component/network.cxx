@@ -16,9 +16,21 @@ namespace iw4x
   {
     scheduler* sched (nullptr);
 
-    // Internal var
+    // Internal socket state.
     //
-    SOCKET* ip_socket (reinterpret_cast<SOCKET*> (0x1467E8490));
+    struct socket_state
+    {
+      SOCKET* ip;
+      SOCKET* lsp;
+
+      explicit
+      socket_state ()
+        : ip  ((SOCKET*) 0x1467E8490),
+          lsp ((SOCKET*) 0x1467E8498)
+      {}
+    };
+
+    socket_state st;
   }
 
   network::
@@ -33,55 +45,38 @@ namespace iw4x
       {
         try
         {
-          // Create socket.
+          SOCKET s (socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP));
+
+          if (s == INVALID_SOCKET)
+            throw runtime_error (format_message (WSAGetLastError ()));
+
+          // Switch the socket into non-blocking mode.
           //
-          SOCKET sock (socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP));
+          if (u_long m (1); ioctlsocket (s, FIONBIO, &m) == SOCKET_ERROR)
+            throw runtime_error (format_message (WSAGetLastError ()));
 
-          if (sock == INVALID_SOCKET)
-          {
-            int err (WSAGetLastError ());
-            throw runtime_error (to_string (err));
-          }
+          sockaddr_in sa {};
+          sa.sin_family = AF_INET;
+          sa.sin_addr.s_addr = INADDR_ANY;
+          sa.sin_port = htons (0);
 
-          // Set non-blocking mode.
+          if (bind (s, (sockaddr*) &sa, sizeof (sa)) == SOCKET_ERROR)
+            throw runtime_error (format_message (WSAGetLastError ()));
+
+          // Print bound port (ephemeral, assigned by OS).
           //
-          u_long mode (1);
-          if (ioctlsocket (sock, FIONBIO, &mode) == SOCKET_ERROR)
-          {
-            int err (WSAGetLastError ());
-            closesocket (sock);
-            throw runtime_error (to_string (err));
-          }
-
-          // Bind socket.
+          // Used only for debugging: the manual connect sequence later requires
+          // the actual local port.
           //
-          // Get net_port dvar to determine which port to bind to.
+          sockaddr_in ba {};
+          int al (sizeof (ba));
+
+          if (getsockname (s, (sockaddr*) &ba, &al) == 0)
+            cout << "bound to: " << ntohs (ba.sin_port) << endl;
+
+          // Store socket in game's internal ip_socket.
           //
-          dvar_t* net_port_dvar (reinterpret_cast<dvar_t*> (
-            Dvar_FindVar ("net_port")));
-
-          if (net_port_dvar == nullptr)
-            throw runtime_error ("net_port dvar not found");
-
-          int port (net_port_dvar->current.integer);
-
-          sockaddr_in addr {};
-          addr.sin_family = AF_INET;
-          addr.sin_addr.s_addr = INADDR_ANY;
-          addr.sin_port = htons (port);
-
-          if (::bind (sock,
-                      reinterpret_cast<sockaddr*> (&addr),
-                      sizeof (addr)) == SOCKET_ERROR)
-          {
-            int err (WSAGetLastError ());
-            closesocket (sock);
-            throw runtime_error (to_string (err));
-          }
-
-          // Store socket in game's ip_socket.
-          //
-          *ip_socket = sock;
+          *st.ip = s;
         }
         catch (const exception& e)
         {
