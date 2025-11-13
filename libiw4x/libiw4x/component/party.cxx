@@ -28,8 +28,8 @@ namespace iw4x
     o.register_handler ("connect_to_party",
       [this] (const netadr_t& addr, const vector<string>&)
     {
-      dvar_t* mapname  (Dvar_FindVar ("ui_mapname"));
-      dvar_t* gametype (Dvar_FindVar ("ui_gametype"));
+      dvar_t* mapname  (Dvar_FindVar ("mapname"));
+      dvar_t* gametype (Dvar_FindVar ("g_gametype"));
 
       ostringstream os;
       os << "connect_from_party" << " \"" << mapname->current.string  << "\""
