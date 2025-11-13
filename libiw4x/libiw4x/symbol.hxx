@@ -1,6 +1,7 @@
 #pragma once
 
 #include <libiw4x/database.hxx>
+#include <libiw4x/types.hxx>
 
 namespace iw4x
 {
@@ -22,7 +23,7 @@ namespace iw4x
   using  Dvar_SetString_t = __int64 (*) (__int64, __int64);
   extern Dvar_SetString_t Dvar_SetString;
 
-  using  Dvar_SetFromStringByName_t = __int64 (*) (__int64, __int64);
+  using  Dvar_SetFromStringByName_t = dvar_t* (*) (const char*, const char*);
   extern Dvar_SetFromStringByName_t Dvar_SetFromStringByName;
 
   using  Dvar_RegisterBool_t = __int64 (*) (__int64, __int64, int, __int64);
@@ -36,4 +37,13 @@ namespace iw4x
 
   using  NET_SendPacket_t = bool (*) (size_t, char*, int*);
   extern NET_SendPacket_t NET_SendPacket;
+
+  using  NET_StringToAdr_t = bool (*) (const char*, netadr_t*);
+  extern NET_StringToAdr_t NET_StringToAdr;
+
+  using  NET_OutOfBandPrint_t = void (*) (int, netadr_t*, const char*, ...);
+  extern NET_OutOfBandPrint_t NET_OutOfBandPrint;
+
+  using  CL_ConnectFromParty_t = void (*) (int, void*, netadr_t, int, int, const char*, const char*);
+  extern CL_ConnectFromParty_t CL_ConnectFromParty;
 }
