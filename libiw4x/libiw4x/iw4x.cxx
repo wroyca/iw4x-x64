@@ -19,6 +19,7 @@ extern "C"
 #include <libiw4x/component/network.hxx>
 #include <libiw4x/component/oob.hxx>
 #include <libiw4x/component/party.hxx>
+#include <libiw4x/console-win32.hxx>
 
 using namespace std;
 using namespace iw4x::utility;
@@ -268,6 +269,7 @@ namespace iw4x
         network   network (scheduler);
         oob       oob (scheduler);
         party     party (oob);
+        console   console (party);
 
         // __scrt_common_main_seh
         //
