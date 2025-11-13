@@ -100,7 +100,7 @@ namespace iw4x
           sa.sin_addr.s_addr = INADDR_ANY;
           sa.sin_port = htons (0);
 
-          if (bind (s, (sockaddr*) &sa, sizeof (sa)) == SOCKET_ERROR)
+          if (::bind (s, (sockaddr*) &sa, sizeof (sa)) == SOCKET_ERROR)
             throw runtime_error (format_message (WSAGetLastError ()));
 
           // Print bound port (ephemeral, assigned by OS).
