@@ -17,6 +17,8 @@ extern "C"
 #include <libiw4x/component/frame.hxx>
 #include <libiw4x/component/menu.hxx>
 #include <libiw4x/component/network.hxx>
+#include <libiw4x/component/oob.hxx>
+#include <libiw4x/component/party.hxx>
 
 using namespace std;
 using namespace iw4x::utility;
@@ -264,6 +266,8 @@ namespace iw4x
         frame     frame (scheduler);
         menu      menu (scheduler);
         network   network (scheduler);
+        oob       oob (scheduler);
+        party     party (oob);
 
         // __scrt_common_main_seh
         //
