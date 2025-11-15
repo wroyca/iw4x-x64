@@ -1,2 +1,5 @@
 : 1
 location: libiw4x/
+
+:
+location: libiw4x-utility/
