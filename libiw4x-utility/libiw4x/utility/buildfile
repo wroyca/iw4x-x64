@@ -1,7 +1,8 @@
 intf_libs = # Interface dependencies.
 impl_libs = # Implementation dependencies.
 
-lib{iw4x-utility}: {hxx cxx}{** -version} \
+lib{iw4x-utility}: {h   c  }{**         } \
+                   {hxx cxx}{** -version} \
                    {hxx    }{    version} \
                    $impl_libs $intf_libs
 
@@ -9,26 +10,26 @@ hxx{version}: in{version} $src_root/manifest
 
 # Build options.
 #
-cxx.poptions =+ "-I$out_root" "-I$src_root"
+cc.poptions =+ "-I$out_root" "-I$src_root"
 
-obja{*}: cxx.poptions += -DLIBIW4X_UTILITY_STATIC_BUILD
-objs{*}: cxx.poptions += -DLIBIW4X_UTILITY_SHARED_BUILD
+obja{*}: cc.poptions += -DLIBIW4X_UTILITY_STATIC_BUILD
+objs{*}: cc.poptions += -DLIBIW4X_UTILITY_SHARED_BUILD
 
 # Export options.
 #
 lib{iw4x-utility}:
 {
-  cxx.export.poptions = "-I$out_root" "-I$src_root"
-  cxx.export.libs = $intf_libs
+  cc.export.poptions = "-I$out_root" "-I$src_root"
+  cc.export.libs = $intf_libs
 }
 
-liba{iw4x-utility}: cxx.export.poptions += -DLIBIW4X_UTILITY_STATIC
-libs{iw4x-utility}: cxx.export.poptions += -DLIBIW4X_UTILITY_SHARED
+liba{iw4x-utility}: cc.export.poptions += -DLIBIW4X_UTILITY_STATIC
+libs{iw4x-utility}: cc.export.poptions += -DLIBIW4X_UTILITY_SHARED
 
 # Install into the libiw4x/utility/ subdirectory of, say, /usr/include/
 # recreating subdirectories.
 #
-{hxx ixx txx}{*}:
+{h hxx ixx txx}{*}:
 {
   install         = include/libiw4x/utility/
   install.subdirs = true
