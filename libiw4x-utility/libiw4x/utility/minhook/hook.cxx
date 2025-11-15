@@ -24,7 +24,7 @@ namespace iw4x
       }
 
       const char*
-      to_string (status s) noexcept
+      to_string (status s)
       {
         return MH_StatusToString (static_cast<MH_STATUS> (s));
       }
@@ -37,7 +37,7 @@ namespace iw4x
       {
       }
 
-      hook_error::hook_error (status s, const std::string& d)
+      hook_error::hook_error (status s, const string& d)
         : runtime_error (d), code (s)
       {
       }
@@ -61,7 +61,7 @@ namespace iw4x
       }
 
       void
-      uninitialize () noexcept
+      uninitialize ()
       {
         call_once (mh_uninitialize,
                    []
@@ -71,36 +71,27 @@ namespace iw4x
       }
 
       void
-      create (void*& target, void* detour, activation mode)
+      create (uintptr_t t, uintptr_t s)
       {
-        LPVOID o (nullptr);
-
-        check_status (MH_CreateHook (target, detour, &o));
-
-        if (mode == activation::queued)
-          check_status (MH_QueueEnableHook (target));
-        else
-          check_status (MH_EnableHook (target));
-
-        target = o;
+        create (reinterpret_cast<void*> (t), reinterpret_cast<void*> (s));
       }
 
       void
-      enable (void* target)
+      create (void* t, void* s)
       {
-        check_status (MH_EnableHook (target));
+        check_status (MH_CreateHook (t, s, nullptr));
+        check_status (MH_EnableHook (t));
       }
 
       void
-      disable (void* target)
+      create (void*& t, void* s)
       {
-        check_status (MH_DisableHook (target));
-      }
+        void* o (nullptr);
 
-      void
-      remove (void* target)
-      {
-        check_status (MH_RemoveHook (target));
+        check_status (MH_CreateHook (t, s, &o));
+        check_status (MH_EnableHook (t));
+
+        t = o;
       }
     }
   }

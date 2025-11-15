@@ -16,14 +16,9 @@ namespace iw4x
   {
     namespace minhook
     {
-      // Concept for function pointer types.
-      //
-      template <typename T>
-      concept fp = std::is_function_v<std::remove_pointer_t<T>>;
-
       // MinHook status codes wrapped as an enum class.
       //
-      enum class status: int
+      enum class status : int
       {
         ok                       = MH_OK,
         already_initialized      = MH_ERROR_ALREADY_INITIALIZED,
@@ -44,7 +39,7 @@ namespace iw4x
       // Convert status to string representation.
       //
       LIBIW4X_UTILITY_SYMEXPORT const char*
-      to_string (status) noexcept;
+      to_string (status);
 
       // Exception thrown on MinHook errors.
       //
@@ -63,55 +58,41 @@ namespace iw4x
         hook_error (status, const char* description);
       };
 
-      // Hook activation mode.
-      //
-      enum class activation
-      {
-        immediate, queued
-      };
-
       LIBIW4X_UTILITY_SYMEXPORT void
       initialize ();
 
       LIBIW4X_UTILITY_SYMEXPORT void
-      uninitialize () noexcept;
+      uninitialize ();
 
       LIBIW4X_UTILITY_SYMEXPORT void
-      create (void*& target,
-              void* detour,
-              activation mode = activation::immediate);
+      create (uintptr_t target, uintptr_t detour);
 
-      inline void
-      create (fp auto& target,
-              fp auto detour,
-              activation mode = activation::immediate)
+      LIBIW4X_UTILITY_SYMEXPORT void
+      create (void* target, void* detour);
+
+      LIBIW4X_UTILITY_SYMEXPORT void
+      create (void*& target, void* detour);
+
+      template <typename T, typename S>
+        requires (std::is_pointer_v<T> && std::is_pointer_v<S> &&
+                  std::is_function_v<std::remove_pointer_t<T>> &&
+                  std::is_function_v<std::remove_pointer_t<S>>)
+      LIBIW4X_UTILITY_SYMEXPORT inline void
+      create (T& t, S s)
       {
-        void* t = reinterpret_cast<void*> (target);
-        void* d = reinterpret_cast<void*> (detour);
+        create (reinterpret_cast<void*> (t), reinterpret_cast<void*> (s));
 
-        create (t, d, mode);
-
-        target = reinterpret_cast<decltype (target)> (t);
+        // Force selection of create(void*, void*). Passing both arguments as
+        // prvalues avoids the ambiguity between the void* and void*& overloads
+        // while still allowing MinHook to install the patch.
+        //
+        // Because the target is passed as a prvalue, MinHook cannot propagate
+        // the trampoline address back into the caller's function-pointer
+        // variable. We therefore reassign it explicitly after the call to
+        // preserve the usual "original function" semantics.
+        //
+        t = reinterpret_cast<T> (t);
       }
-
-      LIBIW4X_UTILITY_SYMEXPORT void
-      disable (void* target);
-
-      // Disable and remove the hook.
-      //
-      // This operation is intentionally provided for exceptional situations
-      // only. The normal runtime model for IW4x is to keep hooks installed for
-      // the lifetime of the process. Trying to remove hooks at arbitrary times
-      // can therefore introduce hard-to-diagnose failures.
-      //
-      // Prefer to fix the underlying logic so that the hook does not need to be
-      // torn down dynamically. Call remove() only when the problem being solved
-      // is explicitly "we must detach this hook now".
-      //
-      // Throws hook_error on failure.
-      //
-      LIBIW4X_UTILITY_SYMEXPORT void
-      remove (void* target);
     }
   }
 }
