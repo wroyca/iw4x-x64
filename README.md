@@ -1,20 +1,16 @@
-# iw4x - <SUMMARY>
+# IW4x
 
-`iw4x` is a <SUMMARY-OF-FUNCTIONALITY>.
+A client for Call of Duty: Modern Warfare 2, targeting Microsoft re-release.
 
-This file contains setup instructions and other details that are more
-appropriate for development rather than consumption. If you want to use
-`iw4x` in your `build2`-based project, then instead see the accompanying
-package [`README.md`](<PACKAGE>/README.md) file.
+![alt text](.github/image.png)
 
-The development setup for `iw4x` uses the standard `bdep`-based workflow.
-For example:
+## Overview
 
-```
-git clone .../iw4x.git
-cd iw4x
+This repository contains the IW4x client implementation:
 
-bdep init -C @gcc cc config.cxx=g++
-bdep update
-bdep test
-```
+- **[libiw4x](libiw4x/)**
+- **[libiw4x-utility](libiw4x-utility/)**
+
+## License
+
+This project is licensed under the GNU General Public License v3.0 or later. See [LICENSE.md](LICENSE.md) for details.
