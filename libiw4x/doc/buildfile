@@ -1,0 +1,56 @@
+define doxygen: file
+doxygen{*}: extension = doxygen
+
+define doxytag: file
+doxytag{*}: extension = doxytag
+
+doxygen_doc = $config.libiw4x.doxygen
+
+if $doxygen_doc
+  import! doxygen = doxygen%exe{doxygen}
+
+./: doxytag{libiw4x}: include = $doxygen_doc
+
+<doxytag{libiw4x}>: doxygen{libiw4x}                     \
+                    $src_root/../libiw4x/libiw4x/hxx{**} \
+                    $doxygen
+%
+if $doxygen_doc
+{{
+  o  = $directory($>[0])    # Target output directory.
+  c  = $path($<[0])         # Doxygen config file.
+  t  = $path($>[0]).t       # Temp dir.
+  tc = $t/"$leaf($c)"       # Temp doxygen config file.
+  d  = $t/$name($>[0]).d    # Dep file (target list).
+
+  # Describe the dynamic targets for better diagnostics.
+  #
+  dyndep_options = --target-what 'generated doxygen'
+
+  # Doxygen doesn't provide any way to list the would-be-generated XML
+  # files so the best we can do is to generate them, get their list, and
+  # throw them away.
+  #
+  depdb dyndep --dyn-target $dyndep_options --format lines --file $d -- \
+    mkdir -p $t                                                      && \
+    sed -e "s%^\\s*\(XML_OUTPUT\\s*=\).*\$%\\1 $t/xml%"                 \
+        -e "s%^\\s*\(GENERATE_TAGFILE\\s*=\).*\$%\\1%"    $c >$tc    && \
+    $doxygen $tc &$t/xml/***                                         && \
+    find $t/xml -type f                                      >$d     && \
+    sed -e "s%[/\\\\]$path.leaf($t)%%g"                    -i $d     && \
+    echo ''                                                 >>$d     && \
+    echo $path.representation([dir_path] $o/xml)            >>$d
+
+  diag doxygen ($<[0]) -> ($>[0]) $o/fsdir{xml/}
+
+  rm -rf $o/xml # Note: doxygen doesn't clean it up itself.
+
+  $doxygen $c
+}}
+
+doxygen{libiw4x.doxygen}: in{libiw4x.doxygen.in} $src_root/manifest
+{
+  in.symbol = '|'
+
+  input = $src_root/../libiw4x/libiw4x/
+}
