@@ -3,8 +3,6 @@ cxx.std = latest
 using cxx
 
 hxx{*}: extension = hxx
-ixx{*}: extension = ixx
-txx{*}: extension = txx
 cxx{*}: extension = cxx
 
 # Every exe{} in this subproject is by default a test.
