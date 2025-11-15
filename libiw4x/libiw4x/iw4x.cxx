@@ -22,8 +22,11 @@ extern "C"
 #include <libiw4x/utility/minhook/hook.hxx>
 #include <libiw4x/utility/scheduler.hxx>
 
+#include <libiw4x/windows/process-threads-api.hxx>
+
 using namespace std;
 using namespace iw4x::utility;
+using namespace iw4x::windows;
 
 namespace iw4x
 {
@@ -262,7 +265,8 @@ namespace iw4x
 
         // Subsystem initialization
         //
-        minhook::initialize();
+        minhook::initialize ();
+        process_threads_api_init ();
 
         scheduler scheduler;
         frame     frame (scheduler);
