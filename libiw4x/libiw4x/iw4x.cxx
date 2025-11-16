@@ -9,13 +9,18 @@ extern "C"
 }
 
 #include <libiw4x/utility/minhook/hook.hxx>
+#include <libiw4x/utility/scheduler.hxx>
 
 #include <libiw4x/windows/process-threads-api.hxx>
+
+#include <libiw4x/mod/frame.hxx>
+#include <libiw4x/mod/menu.hxx>
 
 using namespace std;
 
 using namespace iw4x::windows;
 using namespace iw4x::utility;
+using namespace iw4x::mod;
 
 namespace iw4x
 {
@@ -110,9 +115,6 @@ namespace iw4x
     {
       if (fdwReason != DLL_PROCESS_ATTACH)
         return TRUE;
-
-      minhook::initialize ();
-      process_threads_api_init ();
 
       // DllMain executes while the process loader lock is held.
       //
@@ -228,6 +230,21 @@ namespace iw4x
             FlushInstructionCache (GetCurrentProcess (), a, size);
           });
 
+        minhook::initialize ();
+        process_threads_api_init ();
+
+        // Subsystem initialization.
+        //
+        // These subsystems form part of the fixed IW4x execution model. They
+        // are required unconditionally, and their construction is tied to the
+        // process lifetime.
+        //
+        #define X(name, args) name name { args };
+        X (scheduler, /*empty*/)
+        X (frame,     scheduler)
+        X (menu,      scheduler)
+        #undef X
+
         // __scrt_common_main_seh
         //
         return reinterpret_cast<int (*) ()> (0x140358D48) ();
@@ -261,6 +278,8 @@ namespace iw4x
         static_cast<unsigned char> (source >> 48 & 0xFF),
         static_cast<unsigned char> (source >> 56 & 0xFF)
       });
+
+      attach_console ();
 
       DWORD o (0);
 
