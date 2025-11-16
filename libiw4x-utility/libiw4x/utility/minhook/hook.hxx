@@ -16,14 +16,9 @@ namespace iw4x
   {
     namespace minhook
     {
-      // Concept for function pointer types.
-      //
-      template <typename T>
-      concept fp = std::is_function_v<std::remove_pointer_t<T>>;
-
       // MinHook status codes wrapped as an enum class.
       //
-      enum class status: int
+      enum class status : int
       {
         ok                       = MH_OK,
         already_initialized      = MH_ERROR_ALREADY_INITIALIZED,
@@ -44,7 +39,7 @@ namespace iw4x
       // Convert status to string representation.
       //
       LIBIW4X_UTILITY_SYMEXPORT const char*
-      to_string (status) noexcept;
+      to_string (status);
 
       // Exception thrown on MinHook errors.
       //
@@ -63,14 +58,40 @@ namespace iw4x
         hook_error (status, const char* description);
       };
 
-      LIBIW4X_UTILITY_SYMEXPORT inline void
+      LIBIW4X_UTILITY_SYMEXPORT void
       initialize ();
 
-      LIBIW4X_UTILITY_SYMEXPORT inline void
+      LIBIW4X_UTILITY_SYMEXPORT void
       uninitialize ();
 
+      LIBIW4X_UTILITY_SYMEXPORT void
+      create (uintptr_t target, uintptr_t source);
+
+      LIBIW4X_UTILITY_SYMEXPORT void
+      create (void* target, void* source);
+
+      LIBIW4X_UTILITY_SYMEXPORT void
+      create (void*& target, void* source);
+
+      template <typename Target, typename Source>
+        requires (std::is_function_v<std::remove_pointer_t<Target>> &&
+                  std::is_function_v<std::remove_pointer_t<Source>>)
       LIBIW4X_UTILITY_SYMEXPORT inline void
-      create (void*& target, void* detour);
+      create (Target& t, Source s)
+      {
+        create (reinterpret_cast<void*> (t), reinterpret_cast<void*> (s));
+
+        // Force selection of create(void*, void*). Passing both arguments as
+        // prvalues avoids the ambiguity between the void* and void*& overloads
+        // while still allowing MinHook to install the patch.
+        //
+        // Because the target is passed as a prvalue, MinHook cannot propagate
+        // the trampoline address back into the caller's function-pointer
+        // variable. We therefore reassign it explicitly after the call to
+        // preserve the usual "original function" semantics.
+        //
+        t = reinterpret_cast<Target> (t);
+      }
     }
   }
 }

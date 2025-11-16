@@ -16,7 +16,7 @@ namespace iw4x
         check_status (MH_STATUS s)
         {
           if (s != MH_OK)
-            [[unlikely]] throw hook_error (static_cast<status> (s));
+            throw hook_error (static_cast<status> (s));
         }
 
         once_flag mh_initialize;
@@ -24,7 +24,7 @@ namespace iw4x
       }
 
       const char*
-      to_string (status s) noexcept
+      to_string (status s)
       {
         return MH_StatusToString (static_cast<MH_STATUS> (s));
       }
@@ -71,14 +71,27 @@ namespace iw4x
       }
 
       void
-      create (void*& target, void* source)
+      create (uintptr_t t, uintptr_t s)
+      {
+        create (reinterpret_cast<void*> (t), reinterpret_cast<void*> (s));
+      }
+
+      void
+      create (void* t, void* s)
+      {
+        check_status (MH_CreateHook (t, s, nullptr));
+        check_status (MH_EnableHook (t));
+      }
+
+      void
+      create (void*& t, void* s)
       {
         void* o (nullptr);
 
-        check_status (MH_CreateHook (target, source, &o));
-        check_status (MH_EnableHook (target));
+        check_status (MH_CreateHook (t, s, &o));
+        check_status (MH_EnableHook (t));
 
-        target = o;
+        t = o;
       }
     }
   }
