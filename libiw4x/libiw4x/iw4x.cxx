@@ -323,13 +323,9 @@ namespace iw4x
         return FALSE;
       }
 
-      if (memcpy (reinterpret_cast<void*> (target),
-                  sequence.data (),
-                  sequence.size ()) == nullptr)
-      {
-        cerr << "error: unable to copy instruction sequence";
-        return FALSE;
-      }
+      memmove (reinterpret_cast<void*> (target),
+               sequence.data (),
+               sequence.size ());
 
       if (VirtualProtect (reinterpret_cast<LPVOID> (target),
                           sequence.size (),
