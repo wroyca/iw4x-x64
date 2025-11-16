@@ -112,34 +112,6 @@ namespace iw4x
       if (stdout_rebound && stderr_rebound)
         ios::sync_with_stdio ();
     }
-
-    void
-    terminate ()
-    {
-      try
-      {
-        // When std::terminate() fires, we want a precise account of how we got
-        // here. Unfortunately, the execution environment at this point is not
-        // guaranteed to be well-behaved. Still, boost::stacktrace::stacktrace()
-        // remains one of the few facilities that can reliably recover a
-        // snapshot of the active frames.
-        //
-        // Note that symbolic information is best-effort. Depending on toolchain
-        // entries may range from fully annotated (function names, file/line) to
-        // bare addresses. We print them verbatim: anything is better than a
-        // silent exit.
-        //
-        cerr << boost::stacktrace::stacktrace () << endl;
-      }
-      catch (...)
-      {
-        // Abort the process.
-        //
-        // https://github.com/adishavit/Terminators/blob/master/README.md
-        //
-        abort ();
-      }
-    }
   }
 
   extern "C"
@@ -167,11 +139,6 @@ namespace iw4x
         // __security_init_cookie
         //
         reinterpret_cast<void (*) ()> (0x1403598CC) ();
-
-        // Install custom terminate handler to capture and print a stack trace
-        // before the process terminates.
-        //
-        set_terminate (&terminate);
 
         // Under normal circumstances, a DLL is unloaded via FreeLibrary once
         // its reference count reaches zero. This is acceptable for auxiliary

@@ -4,7 +4,6 @@ intf_libs = # Interface dependencies.
 impl_libs = # Implementation dependencies.
 
 import intf_libs += libiw4x-utility%lib{iw4x-utility}
-import intf_libs += libboost-stacktrace%lib{boost_stacktrace}
 
 # Assembly stub for OOB packet interception
 #
