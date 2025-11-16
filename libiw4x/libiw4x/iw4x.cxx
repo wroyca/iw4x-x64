@@ -8,8 +8,6 @@ extern "C"
   #include <io.h>
 }
 
-#include <boost/stacktrace.hpp>
-
 #include <libiw4x/console-win32.hxx>
 
 #include <libiw4x/component/frame.hxx>

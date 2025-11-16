@@ -71,19 +71,6 @@ namespace iw4x
       }
 
       void
-      create (uintptr_t t, uintptr_t s)
-      {
-        create (reinterpret_cast<void*> (t), reinterpret_cast<void*> (s));
-      }
-
-      void
-      create (void* t, void* s)
-      {
-        check_status (MH_CreateHook (t, s, nullptr));
-        check_status (MH_EnableHook (t));
-      }
-
-      void
       create (void*& t, void* s)
       {
         void* o (nullptr);
