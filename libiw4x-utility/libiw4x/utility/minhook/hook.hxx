@@ -65,32 +65,20 @@ namespace iw4x
       uninitialize ();
 
       LIBIW4X_UTILITY_SYMEXPORT void
-      create (uintptr_t target, uintptr_t source);
-
-      LIBIW4X_UTILITY_SYMEXPORT void
-      create (void* target, void* source);
-
-      LIBIW4X_UTILITY_SYMEXPORT void
       create (void*& target, void* source);
 
       template <typename Target, typename Source>
         requires (std::is_function_v<std::remove_pointer_t<Target>> &&
                   std::is_function_v<std::remove_pointer_t<Source>>)
       LIBIW4X_UTILITY_SYMEXPORT inline void
-      create (Target& t, Source s)
+      create (Target& target, Source source)
       {
-        create (reinterpret_cast<void*> (t), reinterpret_cast<void*> (s));
+        void* t = reinterpret_cast<void*> (target);
+        void* s = reinterpret_cast<void*> (source);
 
-        // Force selection of create(void*, void*). Passing both arguments as
-        // prvalues avoids the ambiguity between the void* and void*& overloads
-        // while still allowing MinHook to install the patch.
-        //
-        // Because the target is passed as a prvalue, MinHook cannot propagate
-        // the trampoline address back into the caller's function-pointer
-        // variable. We therefore reassign it explicitly after the call to
-        // preserve the usual "original function" semantics.
-        //
-        t = reinterpret_cast<Target> (t);
+        create (t, s);
+
+        target = reinterpret_cast<decltype (target)> (t);
       }
     }
   }
