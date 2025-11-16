@@ -1,24 +1,22 @@
 #include <libiw4x/iw4x.hxx>
 
-#include <iostream>
 #include <array>
+#include <iostream>
 
 extern "C"
 {
   #include <io.h>
 }
 
-#include <libiw4x/utility/minhook/hook.hxx>
-#include <libiw4x/utility/scheduler.hxx>
-
-#include <libiw4x/windows/process-threads-api.hxx>
-
+#include <libiw4x/mod/console.hxx>
 #include <libiw4x/mod/frame.hxx>
 #include <libiw4x/mod/menu.hxx>
 #include <libiw4x/mod/network.hxx>
 #include <libiw4x/mod/oob.hxx>
 #include <libiw4x/mod/party.hxx>
-#include <libiw4x/mod/console.hxx>
+#include <libiw4x/utility/minhook/hook.hxx>
+#include <libiw4x/utility/scheduler.hxx>
+#include <libiw4x/windows/process-threads-api.hxx>
 
 using namespace std;
 

@@ -26,25 +26,7 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef WIN32_LEAN_AND_MEAN
-#  define WIN32_LEAN_AND_MEAN
-#  ifndef NOMINMAX
-#    define NOMINMAX
-#    include <windows.h>
-#    undef NOMINMAX
-#  else
-#    include <windows.h>
-#  endif
-#  undef WIN32_LEAN_AND_MEAN
-#else
-#  ifndef NOMINMAX
-#    define NOMINMAX
-#    include <windows.h>
-#    undef NOMINMAX
-#  else
-#    include <windows.h>
-#  endif
-#endif
+#include <libiw4x/utility/utility-win32.h>
 
 #if defined(_MSC_VER) && !defined(MINHOOK_DISABLE_INTRINSICS)
     #define ALLOW_INTRINSICS
