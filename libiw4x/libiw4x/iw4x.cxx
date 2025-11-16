@@ -8,13 +8,11 @@ extern "C"
   #include <io.h>
 }
 
-#include <libiw4x/utility/minhook/hook.hxx>
-#include <libiw4x/utility/scheduler.hxx>
-
-#include <libiw4x/windows/process-threads-api.hxx>
-
 #include <libiw4x/mod/frame.hxx>
 #include <libiw4x/mod/menu.hxx>
+#include <libiw4x/utility/minhook/hook.hxx>
+#include <libiw4x/utility/scheduler.hxx>
+#include <libiw4x/windows/process-threads-api.hxx>
 
 using namespace std;
 
@@ -185,6 +183,30 @@ namespace iw4x
           exit (1);
         }
 
+        // Relax the binary's memory protection to permit writes to code or data
+        // segments that are otherwise read-only.
+        //
+        MODULEINFO mi;
+        if (GetModuleInformation (GetCurrentProcess (),
+                                  GetModuleHandle (nullptr),
+                                  &mi,
+                                  sizeof (mi)))
+        {
+          if (DWORD o (0); !VirtualProtect (mi.lpBaseOfDll,
+                                            mi.SizeOfImage,
+                                            PAGE_EXECUTE_READWRITE,
+                                            &o))
+          {
+            cerr << "error: unable to change memory protection" << endl;
+            exit (1);
+          }
+        }
+        else
+        {
+          cerr << "error: unable to retrieve module information" << endl;
+          exit (1);
+        }
+
         // Quick Patch
         //
         // Removes runtime dependencies on Xbox Live and XGameRuntime
@@ -221,13 +243,7 @@ namespace iw4x
           })
         ([] (uintptr_t address, int value, size_t size)
           {
-            DWORD o (0);
-            void* a (reinterpret_cast<void*> (address));
-
-            VirtualProtect (a, size, PAGE_EXECUTE_READWRITE, &o);
-            memset (a, value, size);
-            VirtualProtect (a, size, o, &o);
-            FlushInstructionCache (GetCurrentProcess (), a, size);
+            memset (reinterpret_cast<void*> (address), value, size);
           });
 
         minhook::initialize ();

@@ -14,7 +14,8 @@ namespace iw4x
       menuDef_t&
       find_menu (const string& name)
       {
-        XAssetHeader header (DB_FindXAssetHeader (ASSET_TYPE_MENU, name.c_str()));
+        XAssetHeader header (
+          DB_FindXAssetHeader (ASSET_TYPE_MENU, name.c_str ()));
 
         if (header.menu == nullptr)
           throw runtime_error ("unable to find menu: " + name);
@@ -27,13 +28,13 @@ namespace iw4x
       {
         for (int i (0); i < menu.itemCount; ++i)
         {
-          itemDef_s* item (menu.items [i]);
+          itemDef_s* mi (menu.items [i]);
 
           // The engine does not guarantee invariants. Validate pointers before
           // comparing names.
           //
-          if ((item != nullptr) && (item->text != nullptr) && name == item->text)
-            return *item;
+          if ((mi != nullptr) && (mi->text != nullptr) && name == mi->text)
+            return *mi;
         }
 
         throw runtime_error ("unable to find item: " + name);
@@ -68,8 +69,8 @@ namespace iw4x
     menu::
     menu (scheduler& s)
     {
-      // Menu instantiation comes first. Register the continuation in com_frame so
-      // it runs only after the menu graph is actually there to work with.
+      // Menu instantiation comes first. Register the continuation in com_frame
+      // so it runs only after the menu graph is actually there to work with.
       //
       s.post ("com_frame", [] ()
       {
@@ -118,7 +119,9 @@ namespace iw4x
 
         // Action.
         //
-        ([] (const string& menu_name, const string& item_name, const vector<string>& commands)
+        ([] (const string& menu_name,
+             const string& item_name,
+             const vector<string>& commands)
           {
             menuDef_t& menu (find_menu (menu_name));
             itemDef_s& item (find_item (menu, item_name));
