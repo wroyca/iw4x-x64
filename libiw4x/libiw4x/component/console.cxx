@@ -1,4 +1,4 @@
-#include <libiw4x/console-win32.hxx>
+#include <libiw4x/component/console.hxx>
 
 #include <algorithm>
 #include <array>

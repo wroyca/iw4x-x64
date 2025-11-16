@@ -8,19 +8,18 @@ extern "C"
   #include <io.h>
 }
 
-#include <libiw4x/console-win32.hxx>
+#include <libiw4x/utility/cstring.hxx>
+#include <libiw4x/utility/minhook/hook.hxx>
+#include <libiw4x/utility/scheduler.hxx>
+
+#include <libiw4x/windows/process-threads-api.hxx>
 
 #include <libiw4x/component/frame.hxx>
 #include <libiw4x/component/menu.hxx>
 #include <libiw4x/component/network.hxx>
 #include <libiw4x/component/oob.hxx>
 #include <libiw4x/component/party.hxx>
-
-#include <libiw4x/utility/cstring.hxx>
-#include <libiw4x/utility/minhook/hook.hxx>
-#include <libiw4x/utility/scheduler.hxx>
-
-#include <libiw4x/windows/process-threads-api.hxx>
+#include <libiw4x/component/console.hxx>
 
 using namespace std;
 using namespace iw4x::utility;
