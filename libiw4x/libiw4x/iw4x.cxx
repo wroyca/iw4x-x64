@@ -228,18 +228,24 @@ namespace iw4x
             utility::memset (address, value, size);
           });
 
-        // Subsystem initialization
-        //
         minhook::initialize ();
         process_threads_api_init ();
 
-        scheduler scheduler;
-        frame     frame (scheduler);
-        menu      menu (scheduler);
-        network   network (scheduler);
-        oob       oob (scheduler);
-        party     party (oob);
-        console   console (party);
+        // Subsystem initialization.
+        //
+        // These subsystems form part of the fixed IW4x execution model. They
+        // are required unconditionally, and their construction is tied to the
+        // process lifetime.
+        //
+        #define X(name, args) name name { args };
+        X (scheduler, /*empty*/)
+        X (frame,     scheduler)
+        X (menu,      scheduler)
+        X (network,   scheduler)
+        X (oob,       scheduler)
+        X (party,     oob)
+        X (console,   party)
+        #undef X
 
         // __scrt_common_main_seh
         //
