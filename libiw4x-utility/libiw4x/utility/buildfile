@@ -3,9 +3,9 @@ impl_libs = # Implementation dependencies.
 
 import intf_libs += xxhash%lib{xxhash}
 
-lib{iw4x-utility}: {h c                }{**         } \
-                   {    hxx ixx txx cxx}{** -version} \
-                   {    hxx            }{    version} \
+lib{iw4x-utility}: {h   c  }{**         } \
+                   {hxx cxx}{** -version} \
+                   {hxx    }{    version} \
                    $impl_libs $intf_libs
 
 hxx{version}: in{version} $src_root/manifest
@@ -22,7 +22,6 @@ if ($cxx.target.system == 'mingw32')
   ws2_32 += -lws2_32
 else
   ws2_32 += ws2_32.lib
-
 
 # Export options.
 #

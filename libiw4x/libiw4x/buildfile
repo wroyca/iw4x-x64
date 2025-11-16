@@ -27,9 +27,9 @@ mod/obja{oob.asm.a.o}: mod/file{oob.asm} $nasm
   $nasm -f win64 -o $path($>) $path($<[0])
 }}
 
-lib{iw4x}: {hxx ixx txx cxx}{**  -version} \
-           {hxx            }{     version} \
-           {def            }{**          } \
+lib{iw4x}: {hxx cxx}{**  -version} \
+           {hxx    }{     version} \
+           {def    }{**          } \
            $impl_libs $intf_libs
 
 hxx{version}: in{version} $src_root/manifest

@@ -8,8 +8,6 @@ c{*}: extension = c
 h{*}: extension = h
 
 hxx{*}: extension = hxx
-ixx{*}: extension = ixx
-txx{*}: extension = txx
 cxx{*}: extension = cxx
 
 if ($cxx.target.system == 'win32-msvc')
@@ -20,4 +18,4 @@ if ($cxx.class == 'msvc')
 
 # The test target for cross-testing (running tests under Wine, etc).
 #
-test.target = $cxx.target
+test.target = $cc.target
