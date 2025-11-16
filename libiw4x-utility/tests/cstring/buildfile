@@ -1,3 +1,0 @@
-import libs = libiw4x-utility%lib{iw4x-utility}
-
-exe{driver}: {hxx ixx txx cxx}{**} $libs testscript{**}

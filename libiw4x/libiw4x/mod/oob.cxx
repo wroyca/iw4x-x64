@@ -164,41 +164,7 @@ namespace iw4x
           static_cast<unsigned char> (h >> 56 & 0xFF)
         };
 
-        DWORD o (0);
-
-        if (VirtualProtect (reinterpret_cast<LPVOID> (t),
-                            sequence.size (),
-                            PAGE_READWRITE,
-                            &o) == 0)
-        {
-          cerr << "error: unable to change page protection";
-          exit (1);
-        }
-
-        if (memcpy (reinterpret_cast<void*> (t),
-                sequence.data (),
-                    sequence.size ()) == nullptr)
-        {
-          cerr << "error: unable to copy instruction sequence";
-          exit (1);
-        }
-
-        if (VirtualProtect (reinterpret_cast<LPVOID> (t),
-                            sequence.size (),
-                            o,
-                            &o) == 0)
-        {
-          cerr << "error: unable to restore page protection";
-          exit (1);
-        }
-
-        if (FlushInstructionCache (GetCurrentProcess (),
-                                  reinterpret_cast<LPCVOID> (t),
-                                  sequence.size ()) == 0)
-        {
-          cerr << "error: unable to flush instruction cache";
-          exit (1);
-        }
+        memmove (reinterpret_cast<void*> (t), sequence.data (), sequence.size ());
       }
     }
   }

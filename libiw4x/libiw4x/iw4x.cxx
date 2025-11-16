@@ -8,7 +8,6 @@ extern "C"
   #include <io.h>
 }
 
-#include <libiw4x/utility/cstring.hxx>
 #include <libiw4x/utility/minhook/hook.hxx>
 #include <libiw4x/utility/scheduler.hxx>
 
@@ -190,6 +189,30 @@ namespace iw4x
           exit (1);
         }
 
+        // Relax the binary's memory protection to permit writes to code or data
+        // segments that are otherwise read-only.
+        //
+        MODULEINFO mi;
+        if (GetModuleInformation (GetCurrentProcess (),
+                                  GetModuleHandle (nullptr),
+                                  &mi,
+                                  sizeof (mi)))
+        {
+          if (DWORD o (0); !VirtualProtect (mi.lpBaseOfDll,
+                                            mi.SizeOfImage,
+                                            PAGE_EXECUTE_READWRITE,
+                                            &o))
+          {
+            cerr << "error: unable to change memory protection" << endl;
+            exit (1);
+          }
+        }
+        else
+        {
+          cerr << "error: unable to retrieve module information" << endl;
+          exit (1);
+        }
+
         // Quick Patch
         //
         // Removes runtime dependencies on Xbox Live and XGameRuntime
@@ -226,7 +249,7 @@ namespace iw4x
           })
         ([] (uintptr_t address, int value, size_t size)
           {
-            utility::memset (address, value, size);
+            memset (reinterpret_cast<void*> (address), value, size);
           });
 
         minhook::initialize ();
