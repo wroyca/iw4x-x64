@@ -8,10 +8,14 @@ extern "C"
   #include <io.h>
 }
 
+#include <libiw4x/utility/minhook/hook.hxx>
+
 #include <libiw4x/windows/process-threads-api.hxx>
 
 using namespace std;
+
 using namespace iw4x::windows;
+using namespace iw4x::utility;
 
 namespace iw4x
 {
@@ -107,16 +111,26 @@ namespace iw4x
       if (fdwReason != DLL_PROCESS_ATTACH)
         return TRUE;
 
+      minhook::initialize ();
+      process_threads_api_init ();
+
+      // DllMain executes while the process loader lock is held.
+      //
+      // This is one of the few contexts where the operating system invokes our
+      // code under a low-level synchronization primitive. Any attempt to
+      // perform nontrivial work here risks deadlock or subtle ordering
+      // violations.
+      //
+      // To avoid this, we do not initialize directly in DllMain. Instead, we
+      // patch the executable's startup routine so that our setup runs later on
+      // IW4's main thread, outside the constraints imposed by the loader lock.
+      //
       uintptr_t target (0x140358EBC);
       uintptr_t source (reinterpret_cast<uintptr_t> (+[] ()
       {
         // __security_init_cookie
         //
         reinterpret_cast<void (*) ()> (0x1403598CC) ();
-
-        // Install ProcessThreadsAPI detours.
-        //
-        process_threads_api_init ();
 
         // Under normal circumstances, a DLL is unloaded via FreeLibrary once
         // its reference count reaches zero. This is acceptable for auxiliary
@@ -168,6 +182,51 @@ namespace iw4x
           cerr << "error: unable to retrieve module location" << endl;
           exit (1);
         }
+
+        // Quick Patch
+        //
+        // Removes runtime dependencies on Xbox Live and XGameRuntime
+        // components.
+        //
+        ([] (void (*_) (uintptr_t, int, size_t))
+          {
+            _(0x1401B2FCA, 0x31, 1); // Bypass XGameRuntimeInitialize
+            _(0x1401B2FCB, 0xC0, 1); //
+            _(0x1401B2FCC, 0x90, 3); //
+            _(0x1401B308F, 0x31, 1); //
+            _(0x1401B3090, 0xC0, 1); //
+            _(0x1401B3091, 0x90, 3); //
+
+            _(0x1402A6A4B, 0x90, 5); // NOP out CurlX initialization
+            _(0x1402A6368, 0x90, 5); // NOP out CurlX cleanup
+
+            _(0x1402A5F70, 0x90, 3); // Skip flag clobbering
+            _(0x1402A5F73, 0x74, 1); // Bypass Xbox Live restriction
+            _(0x1400F5B86, 0xEB, 1); // Skip XBOXLIVE_SIGNINCHANGED
+            _(0x1400F5BAC, 0xEB, 1); // Skip XBOXLIVE_SIGNEDOUT
+            _(0x14010B332, 0xEB, 1); // Bypass Xbox Live permission
+            _(0x1401BA1FE, 0xEB, 1); // Always pass signed-in status
+
+            _(0x140271ED0, 0xC3, 1); // Disable popup
+
+            _(0x1400F6BC4, 0x90, 2); // Skip playlist download check
+            _(0x1400FC833, 0xEB, 1); // Skip config string mismatch (1)
+            _(0x1400D2AFC, 0x90, 2); // Skip config string mismatch (2)
+
+            _(0x1400E4DA0, 0x33, 1); // Skip crash from stats
+            _(0x1400E4DA1, 0xC0, 1); //
+            _(0x1400E4DA2, 0xC3, 1); //
+          })
+        ([] (uintptr_t address, int value, size_t size)
+          {
+            DWORD o (0);
+            void* a (reinterpret_cast<void*> (address));
+
+            VirtualProtect (a, size, PAGE_EXECUTE_READWRITE, &o);
+            memset (a, value, size);
+            VirtualProtect (a, size, o, &o);
+            FlushInstructionCache (GetCurrentProcess (), a, size);
+          });
 
         // __scrt_common_main_seh
         //
