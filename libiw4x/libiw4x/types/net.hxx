@@ -1,6 +1,7 @@
 #pragma once
 
-#include <libiw4x/utility/utility-win32.hxx>
+#include <cstdint>
+#include <winsock2.h>
 
 // 29
 //

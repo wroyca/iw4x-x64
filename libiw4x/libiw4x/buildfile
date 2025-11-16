@@ -10,18 +10,18 @@ import intf_libs += libiw4x-utility%lib{iw4x-utility}
 # There is no built-in rule to synthesize the lib{s,a} -> obj{s,a} -> asm{}
 # dependencies so we have to do it manually.
 #
-libs{iw4x}: component/objs{oob.asm.so.o}
-liba{iw4x}: component/obja{oob.asm.a.o}
+libs{iw4x}: mod/objs{oob.asm.so.o}
+liba{iw4x}: mod/obja{oob.asm.a.o}
 
 # Dependencies of the object files on the .asm source file and recipe.
 #
-component/objs{oob.asm.so.o}: component/file{oob.asm} $nasm
+mod/objs{oob.asm.so.o}: mod/file{oob.asm} $nasm
 {{
   diag nasm ($<[0])
   $nasm -f win64 -o $path($>) $path($<[0])
 }}
 
-component/obja{oob.asm.a.o}: component/file{oob.asm} $nasm
+mod/obja{oob.asm.a.o}: mod/file{oob.asm} $nasm
 {{
   diag nasm ($<[0])
   $nasm -f win64 -o $path($>) $path($<[0])
