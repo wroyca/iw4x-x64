@@ -1,0 +1,24 @@
+name: Pull Request Actions
+
+on:
+  pull_request:
+    types: [opened]
+
+env:
+  OPENED: |
+    Thank you for opening this pull request, @${{ github.actor }}. It has been registered and will be reviewed in sequence.
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  opened:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.action == 'opened'
+    steps:
+      - name: Comment
+        env:
+          NUMBER: ${{ github.event.pull_request.number }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh pr comment "$NUMBER" --repo ${{ github.repository }} --body "$OPENED"

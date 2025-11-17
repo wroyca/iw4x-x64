@@ -1,0 +1,24 @@
+name: Issue Actions
+
+on:
+  issues:
+    types: [opened]
+
+env:
+  OPENED: |
+    Thank you for opening this issue, @${{ github.actor }}. It has been registered and will be reviewed in sequence.
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  opened:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issues' && github.event.action == 'opened'
+    steps:
+      - name: Comment
+        env:
+          NUMBER: ${{ github.event.issue.number }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh issue comment "$NUMBER" --repo ${{ github.repository }} --body "$OPENED"
